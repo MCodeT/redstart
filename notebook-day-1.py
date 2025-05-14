@@ -231,6 +231,43 @@ def _(mo):
     )
     return
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    **Inclinaison de la fusée** : L'angle $\theta$ est l'angle d'inclinaison de la fusée par rapport à la verticale. 
+
+    **Angle de la poussée** : L'angle $\phi$ est l'angle sous lequel la poussée est appliquée par rapport à l'axe du propulseur.
+
+    L'angle total formé par la force avec la verticale est donc $\theta + \phi$. À partir de là, nous pouvons utiliser des fonctions trigonométriques pour obtenir les composantes horizontale ($f_x$) et verticale ($f_y$) de la force.
+
+    ### Expressions finales :
+
+    La composante horizontale de la force est donnée par :
+
+    $$
+    f_x = -f \sin(\theta + \phi)
+    $$
+
+    La composante verticale de la force est donnée par :
+
+    $$
+    f_y = f \cos(\theta + \phi)
+    $$
+
+    """
+    )
+    return
+
+
+@app.cell
+def _(np):
+    def force(f, theta, phi):
+            fx = -f * np.sin(theta + phi)  # Composante horizontale
+            fy = f * np.cos(theta + phi)   # Composante verticale
+            return fx, fy
+    return
+
 
 @app.cell(hide_code=True)
 def _(mo):

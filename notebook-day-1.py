@@ -400,7 +400,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _():
    def couple(np, l, f, phi):
-    tr = - f * l * np.sin(phi)
+        tr = - f * l * np.sin(phi)
         return tr
     def acc(J, tr):
         theta = tr / J
@@ -450,6 +450,88 @@ def _(mo):
     """
     )
     return
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    ###On définit le vecteur d’état
+    On regroupe les positions et les vitesses dans un vecteur d’état :
+    
+    $$
+    \mathbf{X} = \begin{bmatrix}
+    x \\
+    \dot{x} \\
+    y \\
+    \dot{y} \\
+    \theta \\
+    \dot{\theta}
+    \end{bmatrix}
+    $$
+    
+    ---
+    
+    ###On écrit le système sous forme vectorielle
+    
+    La dérivée de ce vecteur d’état donne :
+    
+    $$
+    \frac{d\mathbf{X}}{dt} =
+    \begin{bmatrix}
+    \dot{x} \\
+    - f \sin(\theta + \phi) \\
+    \dot{y} \\
+    - Mg + f \cos(\theta + \phi) \\
+    \dot{\theta} \\
+    \dfrac{f \ell \sin(\phi)}{J}
+    \end{bmatrix}
+    $$
+    
+    ---
+    
+    ###Forme finale
+    
+    On peut donc écrire notre système sous la forme classique d’une équation différentielle vectorielle :
+    
+    $$
+    \frac{d\mathbf{X}}{dt} = \mathbf{F}(\mathbf{X}, t)
+    $$
+    avec
+
+    $$
+    \mathbf{F}(\mathbf{X}, t) =
+    \begin{bmatrix}
+    \dot{x} \\
+    - f \sin(\theta + \phi) \\
+    \dot{y} \\
+    - Mg + f \cos(\theta + \phi) \\
+    \dot{\theta} \\
+    \dfrac{f \ell \sin(\phi)}{J}
+    \end{bmatrix}
+    $$
+    
+    On résout le système numériquement avec`solve_ivp`.
+
+    """
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+ def f_phi(t, z):
+        x, dx, y, dy, theta, dtheta = z
+
+        ddx = -f * np.sin(theta + phi)        
+        ddy = -M * g + f * np.cos(theta + phi) 
+        ddtheta = (f * l * np.sin(phi)) / J    
+
+        return np.array([dx, ddx, dy, ddy, dtheta, ddtheta])
+def redstart_solve(t_span, y0, f_phi):
+        sol = solve_ivp(f_phi, t_span, y0, dense_output=True)
+        return sol
+    return
+
 
 
 @app.cell(hide_code=True)

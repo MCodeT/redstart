@@ -214,9 +214,9 @@ def _(mo):
 
 @app.cell
 def _():
-    g = 1 
-    M = 1 
-    l = 1 
+    g = 1 #m/s²
+    M = 1 #kg
+    l = 1 #m (half-length)
     return
 
 

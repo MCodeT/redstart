@@ -332,7 +332,7 @@ def _(mo):
     )
     return
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -348,7 +348,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
     def _(M, l):
         J = (1/3) * M * l**2
@@ -365,6 +365,46 @@ def _(mo):
     Give the ordinary differential equation that governs the tilt angle $\theta$.
     """
     )
+    return
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    On applique la force \( f \) sur la tige de masse \( M \) et de longueur \( 2\ell \), à une distance \( \ell \) du centre de rotation et selon un angle \( \phi \).
+
+    Le moment du couple généré:
+
+    \[
+    \tau = -f \ell \sin(\phi)
+    \]
+
+    En utilisant la loi de Newton pour la rotation :
+
+    \[
+    \tau = J \ddot{\theta}
+    \quad \Rightarrow \quad 
+    \ddot{\theta} = \frac{\tau}{J}
+    \]
+
+    et on a \( J = \frac{1}{3} M \ell^2 \), alors :
+
+    \[
+    \ddot{\theta} = - \frac{3f}{M\ell} \, \sin(\phi)
+    \]
+    """
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+   def couple(np, l, f, phi):
+    tr = - f * l * np.sin(phi)
+        return tr
+    def acc(J, tr):
+        theta = tr / J
+        return theta
     return
 
 

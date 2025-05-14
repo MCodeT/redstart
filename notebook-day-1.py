@@ -280,6 +280,46 @@ def _(mo):
     )
     return
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    ### Deuxième loi de Newton
+
+    *Force du réacteur* : \((f_x, f_y)\)  
+
+    *Équations du mouvement* :
+
+    \[
+    M\ddot{x} = f_x
+    \]
+
+    \[
+    M\ddot{y} = f_y - Mg
+    \]
+
+    *Substitution des composantes de force* :
+
+    \[
+    M\ddot{x} = -f \sin(\theta + \phi)
+    \]
+
+    \[
+    M\ddot{y} = f \cos(\theta + \phi) - Mg
+    \]
+
+    \[
+    \ddot{x} = -\frac{f}{M} \sin(\theta + \phi)
+    \]
+
+    \[
+    \ddot{y} = \frac{f}{M} \cos(\theta + \phi) - g
+    \]
+
+    """
+    )
+    return
+
 
 @app.cell(hide_code=True)
 def _(mo):

@@ -547,6 +547,88 @@ def _(mo):
     )
     return
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    Nous cherchons une poussée verticale \( f(t) \) permettant au booster de descendre de 10 m à \( y = \ell = 1 \) en 5 secondes, avec une vitesse nulle au départ et à l’arrivée. On suppose :
+    
+    - Le booster reste vertical : \( \theta(t) = \phi(t) = 0 \)
+    - Aucun mouvement horizontal : \( x(t) = \dot{x}(t) = 0 \)
+    
+    ### Objectif
+    
+    \[
+    \begin{cases}
+    y(0) = 10,\ \dot{y}(0) = 0 \\
+    y(5) = 1,\ \dot{y}(5) = 0
+    \end{cases}
+    \]
+    
+    ### Équation du mouvement
+    
+    \[
+    \ddot{y}(t) = f(t) - 1 \quad \Rightarrow \quad f(t) = \ddot{y}(t) + 1
+    \]
+    
+    ### Méthode
+    
+    On construit un polynôme cubique \( y(t) \) satisfaisant les conditions initiales et finales. On en déduit la vitesse \( \dot{y}(t) \), l’accélération \( \ddot{y}(t) \), puis la poussée \( f(t) \).
+    
+    La simulation montre une descente contrôlée et douce jusqu'à \( y = \ell \), avec vitesse nulle à l’arrivée.
+
+    """
+    )
+    return
+
+@app.cell(hide_code=True)
+def _(l, np, plt, redstart_solve):
+    from scipy.interpolate import BPoly
+
+    t_debut, t_fin = 0.0, 5.0
+
+    pos_init, vit_init = 10.0, 0.0
+    pos_finale, vit_finale = 1.0, 0.0
+
+    instants = [t_debut, t_fin]
+    conditions = [[pos_init, vit_init], [pos_finale, vit_finale]]
+    trajectoire_poly = BPoly.from_derivatives(instants, conditions)
+
+    def hauteur_visee(t):
+        return trajectoire_poly(t)
+
+    def vitesse_visee(t):
+        return trajectoire_poly.derivative()(t)
+
+    def acceleration_visee(t):
+        return trajectoire_poly.derivative(2)(t)
+
+    def controle_poussee(t, etat):
+        pouss = acceleration_visee(t) + 1
+        return np.array([pouss, 0.0])  
+
+    etat_initial = [0.0, 0.0, pos_init, vit_init, 0.0, 0.0]
+
+    solution = redstart_solve([t_debut, t_fin], etat_initial, controle_poussee)
+
+    t_points = np.linspace(t_debut, t_fin, 1000)
+    y_points = solution(t_points)[2]
+
+    plt.figure(figsize=(8, 4))
+    plt.plot(t_points, y_points, label=r"Altitude $y(t)$")
+    plt.axhline(y=l, color="grey", ls="--", label=r"Hauteur cible $y = \ell$")
+    plt.axhline(y=0, color="red", ls="--", label=r"Sol $y = 0$")
+    plt.title("Descente verticale contrôlée")
+    plt.xlabel("Temps écoulé (s)")
+    plt.ylabel("Altitude (m)")
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+     return (controle_poussee,)
+
+
 
 @app.cell(hide_code=True)
 def _(mo):

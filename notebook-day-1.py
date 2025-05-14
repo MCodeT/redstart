@@ -660,6 +660,58 @@ def _(mo):
     """
     )
     return
+@app.cell(hide_code=True)
+def _():
+ import matplotlib.pyplot as plt
+    import matplotlib.patches as patches
+    import numpy as np
+    
+    def draw_booster(x, y, theta, f, phi=None, M=1, g=9.81, ℓ=1):
+    
+        if phi is None:
+            phi = theta 
+    
+        fig, ax = plt.subplots()
+        ax.set_aspect('equal')
+        ax.set_facecolor('#eef7fd')
+        ax.set_xlim(x - 2, x + 2)
+        ax.set_ylim(0, y + 2)
+    
+        landing_zone = patches.Rectangle((0, 0), 1, 0.2, color='sandybrown')
+        ax.add_patch(landing_zone)
+    
+        booster_width, booster_height = 0.2, 1
+        body = patches.Rectangle((-booster_width/2, 0), booster_width, booster_height, color='black')
+    
+        t_body = patches.transforms.Affine2D().rotate_around(0, 0, theta).translate(x, y)
+        body.set_transform(t_body + ax.transData)
+        ax.add_patch(body)
+    
+        booster_bottom_local = np.array([0, 0]) 
+        rot_matrix = np.array([
+            [np.cos(theta), -np.sin(theta)],
+            [np.sin(theta),  np.cos(theta)]
+        ])
+        booster_bottom_world = rot_matrix @ booster_bottom_local + np.array([x, y])
+    
+        flame_length = ℓ * (f / (M * g))
+        flame_width = 0.1
+        flame = patches.Rectangle((-flame_width/2, 0), flame_width, -flame_length, color='orange')
+    
+        flame_transform = (
+            patches.transforms.Affine2D()
+            .rotate_around(0, 0, phi)
+            .translate(*booster_bottom_world)
+        )
+        flame.set_transform(flame_transform + ax.transData)
+        ax.add_patch(flame)
+    
+        plt.title("Simulation Physique de Booster")
+        plt.show()
+    
+    draw_booster(x=0, y=10, theta=np.pi/10, f=5, ℓ=1, phi=np.pi/2)
+    return
+
 
 
 @app.cell(hide_code=True)

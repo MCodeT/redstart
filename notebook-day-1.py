@@ -332,6 +332,29 @@ def _(mo):
     )
     return
 
+@app.cell
+def _(mo):
+    mo.md(
+        r"""
+    On considère la fusee de longueur totale \( 2\ell \), de masse \( M \), et qui tourne autour de son centre.
+
+    La formule du moment d'inertie \( J \) d’une tige uniforme par rapport à un axe perpendiculaire à la tige et passant par son centre est :
+
+    \[
+    J = \frac{1}{12} M (2\ell)^2 = \frac{1}{3} M \ell^2
+    \]
+    """
+    )
+    return
+
+
+@app.cell
+def _():
+    def _(M, l):
+        J = (1/3) * M * l**2
+        return J
+    return
+
 
 @app.cell(hide_code=True)
 def _(mo):

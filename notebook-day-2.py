@@ -980,7 +980,6 @@ def _(mo):
     \( A.N : M=1\,kg, g=1\,m/s^2\Rightarrow f=1\,N\)
 
     C’est la seule configuration d’équilibre possible sous ces contraintes.
-
     """
     )
     return
@@ -1013,7 +1012,6 @@ def _(mo):
     \(\theta = 0, \quad \phi = 0, \quad f = Mg\)
 
     Mais les vitesses \( \dot{x} \) et \( \dot{y} \) restent libres à l’équilibre : le système peut être en mouvement uniforme dans n’importe quelle direction.
-
     """
     )
     return
@@ -1149,7 +1147,6 @@ def _(mo):
     0 & -\frac{Mg\ell}{J} \\
     \end{bmatrix}
     \]
-
     """
     )
     return
@@ -1260,7 +1257,6 @@ def _(mo):
       En effet, même si \( \Delta \phi \) n'agit pas directement sur \( \Delta x \), elle influence l’angle \( \theta \), qui à son tour agit sur le mouvement horizontal dans les itérations suivantes via la matrice \( A \).
 
     Tous les états deviennent accessibles via l’action des entrées, ce qui signifie que le modèle linéarisé est **contrôlable**.
-
     """
     )
     return
@@ -1415,6 +1411,97 @@ def _(mo):
 
     Make graphs of $y(t)$ and $\theta(t)$ for the linearized model when $\phi(t)=0$,
     $x(0)=0$, $\dot{x}(0)=0$, $\theta(0) = 45 / 180  \times \pi$  and $\dot{\theta}(0) =0$. What do you see? How do you explain it?
+    """
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(g, np, plt):
+
+    theta0 = np.deg2rad(45)
+    y0 = 0.0                 
+    y_dot0 = 0.0              
+    theta_dot0 = 0.0  
+
+    t = np.linspace(0, 5, 500)
+
+    y = y0 + y_dot0 * t - 0.5 * g * t**2
+    theta = theta0 + theta_dot0 * t
+
+    # Plot y(t)
+    plt.figure()
+    plt.plot(t, y)
+    plt.title("Chute libre linéarisée: $y(t)$")
+    plt.xlabel("temps $t$")
+    plt.ylabel("$y(t)$")
+    plt.grid(True)
+    plt.show()
+
+    # Plot θ(t)
+    plt.figure()
+    plt.plot(t, theta)
+    plt.title("Chute libre linéarisée : $\\theta(t)$")
+    plt.xlabel("temps $t$")
+    plt.ylabel("$\\theta(t)$")
+    yticks = [0, np.pi/4, np.pi/2, 3*np.pi/4, np.pi]
+    yticklabels = ['0', 'π/4', 'π/2', '3π/4', 'π']
+    plt.yticks(yticks, yticklabels)
+    plt.grid(True)
+    plt.show()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    ### What we see :
+
+    - *\(y(t) :\)* On obtient une trajectoire en chute libre :  
+      \(
+        y(t) \;=\; y(0) \;+\; \dot y(0)\,t \;-\;\tfrac12\,g\,t^2
+        \;=\;-\,\tfrac12\,t^2
+      \)
+      avec \(g=1\), \(y(0)=0\) et \(\dot y(0)=0\).
+
+    - *\(\theta(t) :\)* L’angle reste constant à sa valeur initiale :  
+      \(
+        \theta(t) \;=\;\theta(0)
+        \;=\;\tfrac{\pi}{4}
+      \)
+      car la vitesse angulaire initiale est nulle et il n’y a pas de couple de redressement.
+    ### why :
+
+    1) Équation de translation verticale :  
+     -  Dans le modèle linéarisé autour de l’équilibre de vol stationnaire, on a :
+       \(
+         \Delta\ddot y \;=\;\tfrac{1}{M}\,\Delta f\,.
+       \)  
+       Pour la chute libre, on pose \(f(t)=0\), donc  
+       \(
+         \Delta f = f - Mg = -\,Mg
+         \quad\Longrightarrow\quad
+         \Delta\ddot y = -\,g.
+       \)  
+       D’où la loi \(y(t)=y(0)+\dot y(0)\,t-\tfrac12\,g\,t^2\).
+
+    2) Équation de rotation :  
+    - Toujours en linéarisant :  
+       \(
+         \Delta\ddot\theta 
+         \;=\; -\,\frac{M\,g\,\ell}{J}\,\Delta\varphi\,.
+       \)  
+       Ici \(\varphi(t)=0\) ⇒ \(\Delta\varphi=0\) ⇒  
+       \(\Delta\ddot\theta=0\).  
+       Avec \(\dot\theta(0)=0\), on déduit :
+       \(
+         \theta(t)=\theta(0)
+         \;=\;\tfrac{\pi}{4}\,,
+       \) 
+       d’où l’angle reste constant.  
+
+    Donc la chute libre entraîne la parabole en \(y(t)\), tandis que l’absence de commande angulaire (\(\varphi=0\)) fige la rotation.
     """
     )
     return

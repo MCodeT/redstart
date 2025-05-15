@@ -975,7 +975,9 @@ def _(mo):
     - \( \ddot{\theta} = 0 \Rightarrow \sin(\phi) = 0 \Rightarrow \phi = 0 \)
 
     En remplaçant, on trouve :  
-    🔹 \( \theta = 0 \), \( \phi = 0 \), \( f = Mg = 1 \)
+    🔹 \( \theta = 0 \), \( \phi = 0 \), \( f = Mg \) 
+
+    \( A.N : M=1\,kg, g=1\,m/s^2\Rightarrow f=1\,N\)
 
     C’est la seule configuration d’équilibre possible sous ces contraintes.
 
@@ -1140,7 +1142,7 @@ def _(J, M, g, l, np):
         [0, -M * g * l / J],
     ])
 
-    return
+    return A, B
 
 
 @app.cell(hide_code=True)
@@ -1161,19 +1163,14 @@ def _(mo):
         r"""
     La stabilité du système linéaire est déterminée par les *valeurs propres* de la matrice \(A\), c’est-à-dire les racines du polynôme caractéristique \(\det(A - \lambda I) = 0\).
 
-    En observant la forme de \(A\), on remarque :
 
-    - c'est une matrice *non diagonalisable* avec plusieurs zéros sur la diagonale,
-    - elle possède *au moins trois valeurs propres nulles* (\(\lambda = 0\)),
-    - les autres valeurs propres proviennent des sous-systèmes \((x, \dot{x}, \theta)\), dont la dynamique n’est pas stabilisée.
-
-    En calculant les valeurs propres, on trouve typiquement :
+    On calcule les valeurs propres, on trouve :
 
     \[
-    \lambda \in \{ 0, 0, 0, 0, \pm \sqrt{g}i \}
+    \lambda \in \{ 0, 0, 0, 0, + \sqrt{g}i, - \sqrt{g}i \}
     \]
 
-    Cela signifie que la matrice \(A\) *n’a pas toutes ses valeurs propres à partie réelle strictement négative*
+    Cela signifie que la matrice \(A\) n’a pas toutes ses valeurs propres à partie réelle strictement négative.
 
 
     Le système **n’est pas asymptotiquement stable**.
@@ -1201,12 +1198,168 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
+    On analyse la matrice de contrôlabilité $\mathcal{C}$:
+
+    Si \( \text{rang}(\mathcal{C}) = 6 \), alors le système est complètement contrôlable.
+
+    \[
+    \mathcal{C} = [B, AB, A^2B, A^3B, A^4B, A^5B] \in \mathbb{R}^{6 \times 12}
+    \]
+
+
+    On peut raisonner sur  \( \Delta f \) et \( \Delta \phi \) comme suit :
+
+    - **\( \Delta f \)** : a un effet direst sur la dynamique verticale \( \Delta \ddot{y} \).
+
+    - **\( \Delta \phi \)** : a un effet à la fois sur la dynamique angulaire \( \Delta \ddot{\theta} \) et sur la position horizontale \( \Delta \ddot{x} \) via son influence sur \( \Delta \theta \).
+
+
+
+      En effet, même si \( \Delta \phi \) n'agit pas directement sur \( \Delta x \), elle influence l’angle \( \theta \), qui à son tour agit sur le mouvement horizontal dans les itérations suivantes via la matrice \( A \).
+
+    Tous les états deviennent accessibles via l’action des entrées, ce qui signifie que le modèle linéarisé est **contrôlable**.
+
+    """
+    )
+    return
+
+
+@app.cell
+def _(A):
+    A.shape
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""On fait le calcul du rang directement avec Python pour verifier :""")
+    return
+
+
+@app.cell
+def _(A, B, np):
+    from scipy.linalg import block_diag
+
+    # Matrice de contrôlabilité
+    n = 6
+    CB = B
+    for i in range(1, n):
+        CB = np.hstack((CB, np.linalg.matrix_power(A, i) @ B))
+
+    # Rang
+    rang_CB = np.linalg.matrix_rank(CB)
+    print("Rang de la matrice de contrôlabilité =", rang_CB)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
     ## 🧩 Lateral Dynamics
 
     We limit our interest in the lateral position $x$, the tilt $\theta$ and their derivatives (we are for the moment fine with letting $y$ and $\dot{y}$ be uncontrolled). We also set $f = M g$ and control the system only with $\phi$.
 
     What are the new (reduced) matrices $A$ and $B$ for this reduced system?
     Check the controllability of this new system.
+    """
+    )
+    return
+
+
+@app.cell
+def _(g, l):
+    import numpy as nn
+    from numpy.linalg import matrix_rank
+
+    # Définition des matrices réduites
+    A_lat = nn.array([
+        [0, 1, 0, 0],
+        [0, 0, -g, 0],
+        [0, 0, 0, 1],
+        [0, 0, 0, 0]
+    ])
+
+    B_lat = nn.array([
+        [0],
+        [-g],
+        [0],
+        [-3 * g / l]
+    ])
+
+    # Matrice de contrôlabilité
+    C_lat = nn.hstack([B_lat, A_lat @ B_lat, A_lat @ A_lat @ B_lat, A_lat @ A_lat @ A_lat @ B_lat])
+    rank_C_lat = matrix_rank(C_lat)
+    print("Rang de la matrice de contrôlabilité latérale :", rank_C_lat)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    On pose les hypothéses suivantes:
+
+    - On néglige la dynamique verticale (\(y, \dot{y}\)) 
+    - On fixe la poussée à \(f = Mg\)
+    - Le seul signal de commande est \(\phi\),l’orientation du moteur.
+    - Le vecteur d’état s'exprime donc par :
+
+    \[
+    \Delta x_{\text{lat}} = 
+    \begin{bmatrix}
+    \Delta x \\
+    \Delta \dot{x} \\
+    \Delta \theta \\
+    \Delta \dot{\theta}
+    \end{bmatrix}
+    \in \mathbb{R}^4
+    \]
+
+    et l’entrée :
+
+    \[
+    \Delta u_{\text{lat}} = \Delta \phi \in \mathbb{R}
+    \]
+
+
+    La dynamique réduite s’écrit :
+
+    \[
+    \dot{\Delta x}_{\text{lat}} = A_{\text{lat}} \Delta x_{\text{lat}} + B_{\text{lat}} \Delta \phi
+    \]
+
+    avec :
+
+    \[
+    A_{\text{lat}} = \begin{bmatrix}
+    0 & 1 & 0 & 0 \\
+    0 & 0 & -g & 0 \\
+    0 & 0 & 0 & 1 \\
+    0 & 0 & 0 & 0
+    \end{bmatrix}, \quad
+    B_{\text{lat}} = \begin{bmatrix}
+    0 \\
+    - g \\
+    0 \\
+    -\frac{Mg\ell}{J} \\
+    \end{bmatrix}
+    \]
+
+
+    Ensuite, on vérifie la contrôlabilité avec la matrice suivante :
+
+    \[
+    \mathcal{C}_{\text{lat}} = \begin{bmatrix}
+    B_{\text{lat}} & A_{\text{lat}} B_{\text{lat}} & A_{\text{lat}}^2 B_{\text{lat}} & A_{\text{lat}}^3 B_{\text{lat}}
+    \end{bmatrix}
+    \in \mathbb{R}^{4 \times 4}
+    \]
+
+    Le code python nous donne un rang égale à *4* 
+
+
+    Conclusion: Le système latéral est complètement contrôlable, ce qui permet de : Concevoir une commande sur \(\phi\)  seule et stabiliser le booster latéralement (angle et position).
     """
     )
     return

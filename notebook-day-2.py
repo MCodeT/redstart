@@ -963,55 +963,69 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
-    ### Équilibres du système
+    Pour qu’un état soit à l’équilibre, les variables doivent rester constantes ; toutes les dérivées sont donc nulles :  
+     \(
+        \dot{x} = \ddot{x} = 0,\quad \dot{y} = \ddot{y} = 0,\quad \dot{\theta} = \ddot{\theta} = 0
+     \)
 
-    On cherche les équilibres du système sous les hypothèses suivantes :  
-    \( |\theta| < \frac{\pi}{2} \), \( |\phi| < \frac{\pi}{2} \) et \( f > 0 \).
+    On impose les contraintes physiques :  
+    \( |\theta| < \dfrac{\pi}{2} \), \( |\phi| < \dfrac{\pi}{2} \) et \( f>0 \).
 
-    À l'équilibre, les accélérations sont nulles. On obtient alors :
-
-    - \( \ddot{x} = 0 \Rightarrow \sin(\theta + \phi) = 0 \Rightarrow \theta + \phi = 0 \)
-    - \( \ddot{y} = 0 \Rightarrow f \cos(\theta + \phi) = Mg \Rightarrow f = Mg \)
-    - \( \ddot{\theta} = 0 \Rightarrow \sin(\phi) = 0 \Rightarrow \phi = 0 \)
-
-    En remplaçant, on trouve :  
-    🔹 \( \theta = 0 \), \( \phi = 0 \), \( f = Mg \) 
-
-    \( A.N : M=1\,kg, g=1\,m/s^2\Rightarrow f=1\,N\)
-
-    C’est la seule configuration d’équilibre possible sous ces contraintes.
-    """
-    )
-    return
+    À l’équilibre, toutes les accélérations sont nulles; on résout donc :
 
 
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(
-        r"""
-    On cherche les configurations d’équilibre du système sous les hypothèses suivantes :  
-    \( |\theta| < \frac{\pi}{2} \), \( |\phi| < \frac{\pi}{2} \), et \( f > 0 \).
+    ### 1. Accélération horizontale
+    \(
+    \ddot{x}= -\frac{f}{M}\,\sin(\theta+\phi)=0
+    \quad\Longrightarrow\quad
+    \sin(\theta+\phi)=0
+    \quad\Longrightarrow\quad
+    \theta+\phi = n\pi,\; n\in\mathbb{Z}.
+    \)
 
-    À l’équilibre, toutes les **accélérations** sont nulles :
-
-    - \( \ddot{x} = 0 \Rightarrow \sin(\theta + \phi) = 0 \Rightarrow \theta + \phi = 0 \)
-    - \( \ddot{y} = 0 \Rightarrow f \cos(\theta + \phi) = Mg \Rightarrow f = Mg \)
-    - \( \ddot{\theta} = 0 \Rightarrow \sin(\phi) = 0 \Rightarrow \phi = 0 \)
-
-    En remplaçant dans la première équation, on obtient :  
-    🔹 \( \theta = 0 \), \( \phi = 0 \), \( f = Mg \)
-
-    En considérant les constantes données dans le modèle :  
-    \( M = 1\,\text{kg}, \quad g = 1\,\text{m/s}^2 \Rightarrow f = 1\,\text{N} \)
+    Sous les contraintes d’angle (\(|\theta|,|\phi|<\pi/2\)), la seule solution admissible est  
+    \(
+    \boxed{\theta+\phi = 0 \;\Longrightarrow\; \phi = -\theta}.
+    \)
 
 
-    Les équilibres ne contraignent pas directement les vitesses \( \dot{x} \) et \( \dot{y} \) : tant que les accélérations sont nulles, on peut avoir des vitesses constantes.  
-    Autrement dit, \( \dot{x} \) et \( \dot{y} \) peuvent être **arbitraires** — le système peut continuer à se déplacer horizontalement ou verticalement de manière uniforme sans sortir de l’état d’équilibre dynamique.
+    ### 2. Accélération verticale
+    \(
+    \ddot{y}= \frac{f}{M}\cos(\theta+\phi)-g = 0
+    \quad\Longrightarrow\quad
+    \frac{f}{M}\cos(\theta+\phi) = g.
+    \)
 
-    La seule configuration d’équilibre statique (en position) est :  
-    \(\theta = 0, \quad \phi = 0, \quad f = Mg\)
+    En utilisant \(\theta+\phi=0\) donc \(\cos(\theta+\phi)=1\) :
+    \(
+    \boxed{f = M\,g}.
+    \)
 
-    Mais les vitesses \( \dot{x} \) et \( \dot{y} \) restent libres à l’équilibre : le système peut être en mouvement uniforme dans n’importe quelle direction.
+
+    ### 3. Accélération angulaire
+    \(
+    \ddot{\theta}= -\frac{\ell f}{J}\,\sin(\phi)=0
+    \quad\Longrightarrow\quad
+    \sin(\phi)=0
+    \quad\Longrightarrow\quad
+    \phi = 0
+    \quad\Longrightarrow\quad
+    \boxed{\theta = 0} \;\;(\text{car } \phi = -\theta).
+    \)
+
+
+    ### Conditions d’équilibre
+
+    Le système est donc à l’équilibre lorsque :
+
+    * \(\boxed{\theta = 0}\)
+    * \(\boxed{\phi = 0}\)
+    * \(\boxed{f = Mg}\)
+
+
+     *Application numérique* :  
+     pour \(M = 1\,\text{kg}\) et \(g = 1\,\text{m/s}^2\)  
+     \(\Rightarrow f = 1\,\text{N}\).
     """
     )
     return
@@ -1432,7 +1446,7 @@ def _(g, np, plt):
     # Plot y(t)
     plt.figure()
     plt.plot(t, y)
-    plt.title("Chute libre linéarisée: $y(t)$")
+    plt.title("Chute libre linéarisée: $x(t)$")
     plt.xlabel("temps $t$")
     plt.ylabel("$y(t)$")
     plt.grid(True)
@@ -1549,6 +1563,189 @@ def _(mo):
     Is your closed-loop model asymptotically stable?
     """
     )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    On veut un controleur d'état de la forme :
+
+    $$
+    \Delta\phi(t) = -K \cdot 
+    \begin{bmatrix}
+    \Delta x(t) \\
+    \Delta \dot{x}(t) \\
+    \Delta \theta(t) \\
+    \Delta \dot{\theta}(t)
+    \end{bmatrix}, \quad
+    \text{avec} \quad K = 
+    \begin{bmatrix}
+    0 & 0 & k_3 & k_4
+    \end{bmatrix}
+    $$
+
+    Seules les variables $\theta$ et $\dot{\theta}$ sont utilisées pour le retour d'état.
+
+
+
+    On étudie un **sous-système** constitué de $(\theta, \dot{\theta})$, 
+    On a un systeme inspire du pendule inverse :
+
+    $$
+    \Delta \ddot{\theta}(t) = a \cdot \Delta \theta(t) + b \cdot \Delta \phi(t)
+    $$
+
+    Puisque :
+
+    $$
+    \Delta \phi(t) = -k_3 \cdot \Delta \theta(t) - k_4 \cdot \Delta \dot{\theta}(t)
+    $$
+
+    On obtient finalement :
+
+    $$
+    \Delta \ddot{\theta} = (a - b k_3) \cdot \Delta \theta - b k_4 \cdot \Delta \dot{\theta}
+    $$
+
+    On reconnaît l’équation d’un système du **deuxième ordre** :
+
+    $$
+    \Delta \ddot{\theta} + 2 \zeta \omega_n \cdot \Delta \dot{\theta} + \omega_n^2 \cdot \Delta \theta = 0
+    $$
+
+    Avec :
+
+    - $\zeta$ : facteur d’amortissement
+
+    - $\omega_n$ : pulsation naturelle
+
+    Par identification :
+
+    $$
+    \begin{aligned}
+    2 \zeta \omega_n &= b k_4 \quad \Rightarrow \quad k_4 = \frac{2 \zeta \omega_n}{b} \\
+    \omega_n^2 &= b k_3 - a \quad \Rightarrow \quad k_3 = \frac{\omega_n^2 + a}{b}
+    \end{aligned}
+    $$
+
+    On choisit les paramètres
+
+    Par exemple :
+    - $\zeta = 0.7$ (bon compromis entre rapidité et amortissement)
+    - $\omega_n = 0.5$ rad/s (réponse lente mais stable)
+
+    Alors :
+
+    $$
+    \begin{aligned}
+    k_4 &= \frac{2 \cdot 0.7 \cdot 0.5}{b} = \frac{0.7}{b} \\
+    k_3 &= \frac{0.5^2 + a}{b} = \frac{0.25 + a}{b}
+    \end{aligned}
+    $$
+
+    On va estimer les constantes **a** et **b** pour avoir un systeme stable et correct.
+
+
+    Par simulation
+
+    On teste plusieurs valeurs, on trouve par exemple : $k_3 = 0.25$, $k_4 = 0.6$ sont les bons coefficients,
+
+    On fait la simulation avec une inclinaison initiale : $\theta(0) = \frac{\pi}{4}$
+
+    Pour objectifs :
+       - $\theta(t) \to 0$ en moins de 20 s
+       - $|\theta(t)| < \frac{\pi}{2}$
+       - $|\phi(t)| < \frac{\pi}{2}$
+
+    Et on ajuste :
+       - Si $\theta$ est trop lent : **augmenter $k_3$**
+       - Si $\theta$ oscille trop : **augmenter $k_4$**
+       - Si $\phi$ devient trop grand : **réduire les deux gains**
+
+
+    **Un bon réglage de $(k_3, k_4)$ permet de ramener rapidement l’angle $\theta$ à zéro, tout en respectant les contraintes physiques du système.**
+    """
+    )
+    return
+
+
+@app.cell
+def _(np, plt):
+    from scipy.integrate import solve_ivp
+
+    # Liste de couples (K3, K4) à tester
+    gain_list = [
+        (0.04,   0.4),
+        (0.0625, 0.5),
+        (0.2,    0.6),
+        (0.25,   0.6)
+    ]
+
+    # Fonction de simulation pour (K3, K4)
+    def simulate_pair(K3, K4, t_final=20, num_pts=1000, settle_tol=1e-2):
+        # Conditions initiales
+        delta_theta0 = np.pi/4
+        theta_dot0 = 0.0
+
+        # Dynamique
+        def dynamics(t, y):
+            dth, dth_dot = y
+            # loi de commande
+            delta_phi = -K3 * dth - K4 * dth_dot
+            # saturation
+            delta_phi = np.clip(delta_phi, -np.pi/2, np.pi/2)
+            return [dth_dot, delta_phi]
+
+        # Intégration
+        t_eval = np.linspace(0, t_final, num_pts)
+        sol = solve_ivp(dynamics, (0, t_final), [delta_theta0, theta_dot0], t_eval=t_eval)
+        delta_theta = sol.y[0]
+        phi_cmd = np.clip(-K3 * delta_theta - K4 * sol.y[1], -np.pi/2, np.pi/2)
+
+        # Calcul du temps de stabilisation
+        above = np.abs(delta_theta) > settle_tol
+        if np.any(above):
+            last_idx = np.max(np.where(above))
+            Ts = sol.t[last_idx + 1] if last_idx < len(sol.t) - 1 else np.nan
+        else:
+            Ts = 0.0
+
+        return sol.t, delta_theta, phi_cmd, Ts
+
+    # Création du graphique
+    fig, (ax_dt, ax_phi) = plt.subplots(2, 1, figsize=(8, 5), sharex=True)
+
+    for K3, K4 in gain_list:
+        t_vals, dtheta_vals, phi_vals, Ts = simulate_pair(K3, K4)
+        label = f"K3={K3:.3f}, K4={K4:.3f}, Ts={Ts:.1f}s" if not np.isnan(Ts) else f"K3={K3:.3f}, K4={K4:.3f}, Ts=nan"
+        ax_dt.plot(t_vals, dtheta_vals, label=label)
+        ax_phi.plot(t_vals, phi_vals, label=label)
+
+    # Lignes de borne ±π/2
+    for ax in (ax_dt, ax_phi):
+        ax.axhline( np.pi/2, color='gray', ls='--')
+        ax.axhline(-np.pi/2, color='gray', ls='--')
+        ax.grid(True)
+
+    # Zoom vertical
+    ax_dt.set_ylim(-0.5, 0.85)
+    ax_phi.set_ylim(-0.1, 0.1)
+
+    # Labels et titres
+    ax_dt.set_ylabel("Δθ(t) (rad)")
+    ax_dt.set_title("Comparaison de Δθ(t) pour différents gains")
+    ax_phi.set_ylabel("Δφ(t) (rad)")
+    ax_phi.set_xlabel("Temps (s)")
+    ax_phi.set_title("Commande saturée Δφ(t)")
+
+    # Légende
+    ax_dt.legend(fontsize='small', loc='upper right')
+    ax_phi.legend(fontsize='small', loc='upper right')
+
+    plt.tight_layout()
+    plt.show()
     return
 
 

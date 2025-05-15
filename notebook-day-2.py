@@ -1443,12 +1443,12 @@ def _(g, np, plt):
     y = y0 + y_dot0 * t - 0.5 * g * t**2
     theta = theta0 + theta_dot0 * t
 
-    # Plot y(t)
+    # Plot x(t)
     plt.figure()
     plt.plot(t, y)
     plt.title("Chute libre linéarisée: $x(t)$")
     plt.xlabel("temps $t$")
-    plt.ylabel("$y(t)$")
+    plt.ylabel("$x(t)$")
     plt.grid(True)
     plt.show()
 
@@ -1570,183 +1570,118 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
-    On veut un controleur d'état de la forme :
+    1) *Modèle second-ordre*  
+       On part de la dynamique linéarisée  
+       \(\displaystyle \Delta\ddot\theta = -\frac{M\,g\,\ell}{J}\,\Delta\phi\).  
+       Avec la loi PD  
+       \(\displaystyle \Delta\phi = -k_{3}\,\Delta\theta - k_{4}\,\Delta\dot\theta\),  
+       on obtient  
+       \(
+         \Delta\ddot\theta
+         + \underbrace{\Bigl(\frac{M\,g\,\ell}{J}k_{4}\Bigr)}{2\,\zeta\,\omega{n}}\;\Delta\dot\theta
+         + \underbrace{\Bigl(\frac{M\,g\,\ell}{J}k_{3}\Bigr)}{\omega{n}^{2}}\;\Delta\theta
+         = 0.
+       \)
 
-    $$
-    \Delta\phi(t) = -K \cdot 
-    \begin{bmatrix}
-    \Delta x(t) \\
-    \Delta \dot{x}(t) \\
-    \Delta \theta(t) \\
-    \Delta \dot{\theta}(t)
-    \end{bmatrix}, \quad
-    \text{avec} \quad K = 
-    \begin{bmatrix}
-    0 & 0 & k_3 & k_4
-    \end{bmatrix}
-    $$
+    2) *Identification*  
+       - \(2\,\zeta\,\omega_{n} = \tfrac{M\,g\,\ell}{J}\,k_{4}\)  
+       - \(\omega_{n}^{2}     = \tfrac{M\,g\,\ell}{J}\,k_{3}\)
 
-    Seules les variables $\theta$ et $\dot{\theta}$ sont utilisées pour le retour d'état.
+    3) *Choix des paramètres*  
+       - \(\zeta=0.7\) (compromis rapidité/amortissement)  
+       - \(\omega_{n}=0.5\) rad/s (stabilisation en <20 s)  
+       ⇒  
+       \(\;k_{4} = \tfrac{2\zeta\omega_{n}}{b},\;k_{3} = \tfrac{\omega_{n}^{2}}{b}\),  
+       où \(b = \tfrac{M\,g\,\ell}{J}\).
 
+    4) *Itérations par simulation*  
+       - Si \(\theta\) trop lent → augmenter \(k_{3}\).  
+       - Si trop d’oscillations → augmenter \(k_{4}\).  
+       - Si \(\Delta\phi\) dépasse \(\pm\pi/2\) → réduire globalement.
 
-
-    On étudie un **sous-système** constitué de $(\theta, \dot{\theta})$, 
-    On a un systeme inspire du pendule inverse :
-
-    $$
-    \Delta \ddot{\theta}(t) = a \cdot \Delta \theta(t) + b \cdot \Delta \phi(t)
-    $$
-
-    Puisque :
-
-    $$
-    \Delta \phi(t) = -k_3 \cdot \Delta \theta(t) - k_4 \cdot \Delta \dot{\theta}(t)
-    $$
-
-    On obtient finalement :
-
-    $$
-    \Delta \ddot{\theta} = (a - b k_3) \cdot \Delta \theta - b k_4 \cdot \Delta \dot{\theta}
-    $$
-
-    On reconnaît l’équation d’un système du **deuxième ordre** :
-
-    $$
-    \Delta \ddot{\theta} + 2 \zeta \omega_n \cdot \Delta \dot{\theta} + \omega_n^2 \cdot \Delta \theta = 0
-    $$
-
-    Avec :
-
-    - $\zeta$ : facteur d’amortissement
-
-    - $\omega_n$ : pulsation naturelle
-
-    Par identification :
-
-    $$
-    \begin{aligned}
-    2 \zeta \omega_n &= b k_4 \quad \Rightarrow \quad k_4 = \frac{2 \zeta \omega_n}{b} \\
-    \omega_n^2 &= b k_3 - a \quad \Rightarrow \quad k_3 = \frac{\omega_n^2 + a}{b}
-    \end{aligned}
-    $$
-
-    On choisit les paramètres
-
-    Par exemple :
-    - $\zeta = 0.7$ (bon compromis entre rapidité et amortissement)
-    - $\omega_n = 0.5$ rad/s (réponse lente mais stable)
-
-    Alors :
-
-    $$
-    \begin{aligned}
-    k_4 &= \frac{2 \cdot 0.7 \cdot 0.5}{b} = \frac{0.7}{b} \\
-    k_3 &= \frac{0.5^2 + a}{b} = \frac{0.25 + a}{b}
-    \end{aligned}
-    $$
-
-    On va estimer les constantes **a** et **b** pour avoir un systeme stable et correct.
-
-
-    Par simulation
-
-    On teste plusieurs valeurs, on trouve par exemple : $k_3 = 0.25$, $k_4 = 0.6$ sont les bons coefficients,
-
-    On fait la simulation avec une inclinaison initiale : $\theta(0) = \frac{\pi}{4}$
-
-    Pour objectifs :
-       - $\theta(t) \to 0$ en moins de 20 s
-       - $|\theta(t)| < \frac{\pi}{2}$
-       - $|\phi(t)| < \frac{\pi}{2}$
-
-    Et on ajuste :
-       - Si $\theta$ est trop lent : **augmenter $k_3$**
-       - Si $\theta$ oscille trop : **augmenter $k_4$**
-       - Si $\phi$ devient trop grand : **réduire les deux gains**
-
-
-    **Un bon réglage de $(k_3, k_4)$ permet de ramener rapidement l’angle $\theta$ à zéro, tout en respectant les contraintes physiques du système.**
+    5) *Résultat final*  
+       Après tests, un bon réglage est  
+       \(\displaystyle k_{3}=0.25,\quad k_{4}=0.6\),  
+       qui satisfait :  
+       - \(\theta(t)\to0\) en <20 s  
+       - \(\bigl|\theta(t)\bigr|<\tfrac{\pi}{2}\)  
+       - \(\bigl|\phi(t)\bigr|<\tfrac{\pi}{2}\)
     """
     )
     return
 
 
 @app.cell
-def _(np, plt):
+def _():
     def _():
+        import numpy as np
+        import matplotlib.pyplot as plt
         from scipy.integrate import solve_ivp
 
-        # Liste de couples (K3, K4) à tester
-        gain_list = [
-            (0.04,   0.4),
-            (0.0625, 0.5),
-            (0.2,    0.6),
-            (0.25,   0.6)
-        ]
+        def run_pd_simulation(np_module, plt_module, sci_module):
+            def simulate_manual_pd():
+                # Conditions initiales
+                initial_theta = np_module.pi / 4   # 45°
+                initial_theta_vel = 0.0
+                initial_x = 0.0
+                initial_x_vel = 0.0
 
-        # Fonction de simulation pour (K3, K4)
-        def simulate_pair(K3, K4, t_final=20, num_pts=1000, settle_tol=1e-2):
-            # Conditions initiales
-            delta_theta0 = np.pi/4
-            theta_dot0 = 0.0
+                # Gains PD choisis
+                k3_pd = 0.25
+                k4_pd = 0.6
+                gain_manual = np_module.array([0, 0, k3_pd, k4_pd])
 
-            # Dynamique
-            def dynamics(t, y):
-                dth, dth_dot = y
-                # loi de commande
-                delta_phi = -K3 * dth - K4 * dth_dot
-                # saturation
-                delta_phi = np.clip(delta_phi, -np.pi/2, np.pi/2)
-                return [dth_dot, delta_phi]
+                # Paramètres de temps
+                time_interval = (0, 20)
+                time_points = np_module.linspace(time_interval[0], time_interval[1], 1000)
 
-            # Intégration
-            t_eval = np.linspace(0, t_final, num_pts)
-            sol = solve_ivp(dynamics, (0, t_final), [delta_theta0, theta_dot0], t_eval=t_eval)
-            delta_theta = sol.y[0]
-            phi_cmd = np.clip(-K3 * delta_theta - K4 * sol.y[1], -np.pi/2, np.pi/2)
+                # Modèle dynamique
+                def dynamics_model(t, state_vector):
+                    x_pos, x_vel, theta, theta_vel = state_vector
+                    input_vector = np_module.array([x_pos, x_vel, theta, theta_vel])
+                    control_input = -gain_manual @ input_vector
+                    control_input = np_module.clip(control_input, -np_module.pi/2, np_module.pi/2)
+                    theta_acc = control_input
+                    x_acc = 0.0
+                    return [x_vel, x_acc, theta_vel, theta_acc]
 
-            # Calcul du temps de stabilisation
-            above = np.abs(delta_theta) > settle_tol
-            if np.any(above):
-                last_idx = np.max(np.where(above))
-                Ts = sol.t[last_idx + 1] if last_idx < len(sol.t) - 1 else np.nan
-            else:
-                Ts = 0.0
+                # Simulation
+                initial_state = [initial_x, initial_x_vel, initial_theta, initial_theta_vel]
+                solution = solve_ivp(
+                    dynamics_model, time_interval, initial_state, t_eval=time_points
+                )
 
-            return sol.t, delta_theta, phi_cmd, Ts
+                # Extraction des résultats
+                t = solution.t
+                theta_vals = solution.y[2]
+                theta_vel_vals = solution.y[3]
+                control_vals = np_module.clip(
+                    -k3_pd * theta_vals - k4_pd * theta_vel_vals,
+                    -np_module.pi/2, np_module.pi/2
+                )
 
-        # Création du graphique
-        fig, (ax_dt, ax_phi) = plt.subplots(2, 1, figsize=(8, 5), sharex=True)
+                # Tracé
+                fig, axes = plt_module.subplots(2, 1, figsize=(10, 6), sharex=True)
+                axes[0].plot(t, theta_vals, label=r'$\Delta\theta(t)$', color='blue')
+                axes[0].axhline(+np_module.pi/2, color='gray', ls='--')
+                axes[0].axhline(-np_module.pi/2, color='gray', ls='--')
+                axes[0].set_ylabel("Δθ (rad)")
+                axes[0].set_title("Évolution de Δθ(t)")
+                axes[0].legend(); axes[0].grid(True)
 
-        for K3, K4 in gain_list:
-            t_vals, dtheta_vals, phi_vals, Ts = simulate_pair(K3, K4)
-            label = f"K3={K3:.3f}, K4={K4:.3f}, Ts={Ts:.1f}s" if not np.isnan(Ts) else f"K3={K3:.3f}, K4={K4:.3f}, Ts=nan"
-            ax_dt.plot(t_vals, dtheta_vals, label=label)
-            ax_phi.plot(t_vals, phi_vals, label=label)
+                axes[1].plot(t, control_vals, label=r'$\Delta\phi(t)$', color='orange')
+                axes[1].axhline(+np_module.pi/2, color='gray', ls='--')
+                axes[1].axhline(-np_module.pi/2, color='gray', ls='--')
+                axes[1].set_ylabel("Δφ (rad)")
+                axes[1].set_xlabel("Temps (s)")
+                axes[1].set_title("Commande saturée Δφ(t)")
+                axes[1].legend(); axes[1].grid(True)
 
-        # Lignes de borne ±π/2
-        for ax in (ax_dt, ax_phi):
-            ax.axhline( np.pi/2, color='gray', ls='--')
-            ax.axhline(-np.pi/2, color='gray', ls='--')
-            ax.grid(True)
+                plt_module.tight_layout()
+                plt_module.show()
 
-        # Zoom vertical
-        ax_dt.set_ylim(-0.5, 0.85)
-        ax_phi.set_ylim(-0.1, 0.1)
-
-        # Labels et titres
-        ax_dt.set_ylabel("Δθ(t) (rad)")
-        ax_dt.set_title("Comparaison de Δθ(t) pour différents gains")
-        ax_phi.set_ylabel("Δφ(t) (rad)")
-        ax_phi.set_xlabel("Temps (s)")
-        ax_phi.set_title("Commande saturée Δφ(t)")
-
-        # Légende
-        ax_dt.legend(fontsize='small', loc='upper right')
-        ax_phi.legend(fontsize='small', loc='upper right')
-
-        plt.tight_layout()
-        return plt.show()
+            simulate_manual_pd()
+        return run_pd_simulation(np, plt, solve_ivp)
 
 
     _()
@@ -1922,9 +1857,151 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
+    ## Conception d’une Commande par Retour d’État sur θ et θ̇
+
+    On souhaite stabiliser le pendule en agissant uniquement sur l’angle \(\Delta \theta\) et sa vitesse \(\Delta \dot{\theta}\), avec comme objectif :
+
+    - \(\Delta \theta(0) = \frac{45}{180} \pi\) rad
+    - \(\Delta \dot{\theta}(0) = 0\)
+    - \(\Delta x(0) = 0\), \(\Delta \dot{x}(0) = 0\)
+
+    Les exigences sont les mêmes :
+
+    - \(\Delta \theta(t)\) doit tendre vers 0 en environ 20 secondes
+    - \(|\Delta \theta(t)| < \frac{\pi}{2}\)
+    - \(|\Delta \varphi(t)| < \frac{\pi}{2}\)
+
+    On ne prend pas en compte le drift de \(\Delta x(t)\), car on n'agit que sur l’équilibre angulaire.
+
+    """
+    )
+    return
+
+
+@app.function
+def retour_etat_theta(np, plt):
+    # Modèle réduit (linéarisé autour de l’équilibre)
+    a = 0.5   # valeur à adapter selon le système réel
+    b = 2.0   # idem
+
+    zeta = 0.7      # amortissement
+    omega_n = 0.5   # pulsation naturelle (≈ π / 10)
+
+    k4 = 2 * zeta * omega_n / b
+    k3 = (omega_n**2 + a) / b
+
+    A = np.array([[0, 1],
+                  [a, 0]])
+
+    B = np.array([[0],
+                  [b]])
+
+    K = np.array([[k3, k4]])
+    A_cl = A - B @ K
+
+    x0 = np.array([45/180*np.pi, 0])
+    dt = 0.01
+    T = 25
+    time = np.arange(0, T, dt)
+    x = np.zeros((2, len(time)))
+    x[:, 0] = x0
+
+    for i in range(1, len(time)):
+        x[:, i] = x[:, i-1] + dt * (A_cl @ x[:, i-1])
+
+    u = -K @ x
+
+    plt.figure(figsize=(10,4))
+
+    plt.subplot(1,2,1)
+    plt.plot(time, x[0,:])
+    plt.axhline(np.pi/2, color='r', linestyle='--')
+    plt.axhline(-np.pi/2, color='r', linestyle='--')
+    plt.xlabel('Temps (s)')
+    plt.ylabel('Angle Δθ (rad)')
+    plt.title('Évolution de Δθ(t)')
+    plt.grid(True)
+
+    plt.subplot(1,2,2)
+    plt.plot(time, u.flatten())
+    plt.axhline(np.pi/2, color='r', linestyle='--')
+    plt.axhline(-np.pi/2, color='r', linestyle='--')
+    plt.xlabel('Temps (s)')
+    plt.ylabel('Commande Δφ (rad)')
+    plt.title('Évolution de la commande Δφ(t)')
+    plt.grid(True)
+
+    plt.tight_layout()
+    return plt.show()
+
+
+@app.cell
+def _():
+    def _():
+        import numpy as np
+        import matplotlib.pyplot as plt
+        return retour_etat_theta(np, plt)
+
+
+    _()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
     ## 🧩 Validation
 
     Test the two control strategies (pole placement and optimal control) on the "true" (nonlinear) model and check that they achieve their goal. Otherwise, go back to the drawing board and tweak the design parameters until they do!
+    """
+    )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(
+        r"""
+    Validation sur le modèle non linéaire
+
+    Après avoir conçu deux stratégies de commande linéaire — par **placement de pôles** et par **contrôle optimal** — nous testons leur efficacité sur le **modèle dynamique non linéaire** afin de vérifier qu’elles permettent bien de stabiliser le système dans des conditions plus réalistes.
+
+
+    Pour chaque stratégie, nous voulons vérifier :
+
+    -  La stabilisation de l’angle \( \theta(t) \to 0 \)
+    -  Le retour de la position horizontale \( x(t) \to 0 \)
+    -  Le respect des contraintes physiques :
+      - \( |\theta(t)| < \frac{\pi}{2} \)
+      - \( |\phi(t)| < \frac{\pi}{2} \)
+    -  Une dynamique asymptotiquement stable avec retour en **moins de 20 secondes**
+
+
+    - On simule le **modèle non linéaire** :
+
+      \[
+      \begin{cases}
+      \ddot{x} = -\dfrac{f}{M} \sin(\theta + \phi) \\
+      \ddot{\theta} = -\dfrac{3g}{l} \cdot \phi
+      \end{cases}
+      \]
+
+    - Le contrôle est appliqué sous forme de retour d’état :
+
+      \[
+      \phi(t) = -K \cdot x(t)
+      \]
+
+      avec :
+      - \( K = K_{pp} \) pour le contrôleur **placement de pôles**
+      - \( K = [k_3,\ k_4] \) pour le **contrôle optimal** basé sur \( \theta \) et \( \dot{\theta} \)
+
+    - Une trajectoire \( x(t) \) qui converge vers 0 sans dérive excessive
+    - Un angle \( \theta(t) \) qui reste dans les limites physiques \( (-\pi/2,\ \pi/2) \) et revient à 0
+    - Une commande \( \phi(t) \) qui respecte \( |\phi(t)| < \pi/2 \)
+    - Une stabilisation complète en **moins de 20 secondes**
+
     """
     )
     return

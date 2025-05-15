@@ -1343,7 +1343,7 @@ def _(g, l):
     C_lat = nn.hstack([B_lat, A_lat @ B_lat, A_lat @ A_lat @ B_lat, A_lat @ A_lat @ A_lat @ B_lat])
     rank_C_lat = matrix_rank(C_lat)
     print("Rang de la matrice de contrôlabilité latérale :", rank_C_lat)
-    return
+    return A_lat, B_lat
 
 
 @app.cell(hide_code=True)
@@ -1673,79 +1673,83 @@ def _(mo):
 
 @app.cell
 def _(np, plt):
-    from scipy.integrate import solve_ivp
+    def _():
+        from scipy.integrate import solve_ivp
 
-    # Liste de couples (K3, K4) à tester
-    gain_list = [
-        (0.04,   0.4),
-        (0.0625, 0.5),
-        (0.2,    0.6),
-        (0.25,   0.6)
-    ]
+        # Liste de couples (K3, K4) à tester
+        gain_list = [
+            (0.04,   0.4),
+            (0.0625, 0.5),
+            (0.2,    0.6),
+            (0.25,   0.6)
+        ]
 
-    # Fonction de simulation pour (K3, K4)
-    def simulate_pair(K3, K4, t_final=20, num_pts=1000, settle_tol=1e-2):
-        # Conditions initiales
-        delta_theta0 = np.pi/4
-        theta_dot0 = 0.0
+        # Fonction de simulation pour (K3, K4)
+        def simulate_pair(K3, K4, t_final=20, num_pts=1000, settle_tol=1e-2):
+            # Conditions initiales
+            delta_theta0 = np.pi/4
+            theta_dot0 = 0.0
 
-        # Dynamique
-        def dynamics(t, y):
-            dth, dth_dot = y
-            # loi de commande
-            delta_phi = -K3 * dth - K4 * dth_dot
-            # saturation
-            delta_phi = np.clip(delta_phi, -np.pi/2, np.pi/2)
-            return [dth_dot, delta_phi]
+            # Dynamique
+            def dynamics(t, y):
+                dth, dth_dot = y
+                # loi de commande
+                delta_phi = -K3 * dth - K4 * dth_dot
+                # saturation
+                delta_phi = np.clip(delta_phi, -np.pi/2, np.pi/2)
+                return [dth_dot, delta_phi]
 
-        # Intégration
-        t_eval = np.linspace(0, t_final, num_pts)
-        sol = solve_ivp(dynamics, (0, t_final), [delta_theta0, theta_dot0], t_eval=t_eval)
-        delta_theta = sol.y[0]
-        phi_cmd = np.clip(-K3 * delta_theta - K4 * sol.y[1], -np.pi/2, np.pi/2)
+            # Intégration
+            t_eval = np.linspace(0, t_final, num_pts)
+            sol = solve_ivp(dynamics, (0, t_final), [delta_theta0, theta_dot0], t_eval=t_eval)
+            delta_theta = sol.y[0]
+            phi_cmd = np.clip(-K3 * delta_theta - K4 * sol.y[1], -np.pi/2, np.pi/2)
 
-        # Calcul du temps de stabilisation
-        above = np.abs(delta_theta) > settle_tol
-        if np.any(above):
-            last_idx = np.max(np.where(above))
-            Ts = sol.t[last_idx + 1] if last_idx < len(sol.t) - 1 else np.nan
-        else:
-            Ts = 0.0
+            # Calcul du temps de stabilisation
+            above = np.abs(delta_theta) > settle_tol
+            if np.any(above):
+                last_idx = np.max(np.where(above))
+                Ts = sol.t[last_idx + 1] if last_idx < len(sol.t) - 1 else np.nan
+            else:
+                Ts = 0.0
 
-        return sol.t, delta_theta, phi_cmd, Ts
+            return sol.t, delta_theta, phi_cmd, Ts
 
-    # Création du graphique
-    fig, (ax_dt, ax_phi) = plt.subplots(2, 1, figsize=(8, 5), sharex=True)
+        # Création du graphique
+        fig, (ax_dt, ax_phi) = plt.subplots(2, 1, figsize=(8, 5), sharex=True)
 
-    for K3, K4 in gain_list:
-        t_vals, dtheta_vals, phi_vals, Ts = simulate_pair(K3, K4)
-        label = f"K3={K3:.3f}, K4={K4:.3f}, Ts={Ts:.1f}s" if not np.isnan(Ts) else f"K3={K3:.3f}, K4={K4:.3f}, Ts=nan"
-        ax_dt.plot(t_vals, dtheta_vals, label=label)
-        ax_phi.plot(t_vals, phi_vals, label=label)
+        for K3, K4 in gain_list:
+            t_vals, dtheta_vals, phi_vals, Ts = simulate_pair(K3, K4)
+            label = f"K3={K3:.3f}, K4={K4:.3f}, Ts={Ts:.1f}s" if not np.isnan(Ts) else f"K3={K3:.3f}, K4={K4:.3f}, Ts=nan"
+            ax_dt.plot(t_vals, dtheta_vals, label=label)
+            ax_phi.plot(t_vals, phi_vals, label=label)
 
-    # Lignes de borne ±π/2
-    for ax in (ax_dt, ax_phi):
-        ax.axhline( np.pi/2, color='gray', ls='--')
-        ax.axhline(-np.pi/2, color='gray', ls='--')
-        ax.grid(True)
+        # Lignes de borne ±π/2
+        for ax in (ax_dt, ax_phi):
+            ax.axhline( np.pi/2, color='gray', ls='--')
+            ax.axhline(-np.pi/2, color='gray', ls='--')
+            ax.grid(True)
 
-    # Zoom vertical
-    ax_dt.set_ylim(-0.5, 0.85)
-    ax_phi.set_ylim(-0.1, 0.1)
+        # Zoom vertical
+        ax_dt.set_ylim(-0.5, 0.85)
+        ax_phi.set_ylim(-0.1, 0.1)
 
-    # Labels et titres
-    ax_dt.set_ylabel("Δθ(t) (rad)")
-    ax_dt.set_title("Comparaison de Δθ(t) pour différents gains")
-    ax_phi.set_ylabel("Δφ(t) (rad)")
-    ax_phi.set_xlabel("Temps (s)")
-    ax_phi.set_title("Commande saturée Δφ(t)")
+        # Labels et titres
+        ax_dt.set_ylabel("Δθ(t) (rad)")
+        ax_dt.set_title("Comparaison de Δθ(t) pour différents gains")
+        ax_phi.set_ylabel("Δφ(t) (rad)")
+        ax_phi.set_xlabel("Temps (s)")
+        ax_phi.set_title("Commande saturée Δφ(t)")
 
-    # Légende
-    ax_dt.legend(fontsize='small', loc='upper right')
-    ax_phi.legend(fontsize='small', loc='upper right')
+        # Légende
+        ax_dt.legend(fontsize='small', loc='upper right')
+        ax_phi.legend(fontsize='small', loc='upper right')
 
-    plt.tight_layout()
-    plt.show()
+        plt.tight_layout()
+        return plt.show()
+
+
+    _()
     return
 
 
@@ -1788,6 +1792,115 @@ def _(mo):
     Explain how you find the proper design parameters!
     """
     )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+
+    ###REP:
+    Pour concevoir la matrice de rétroaction \( K_{pp} \) pour les dynamiques latérales, nous utilisons la méthode de placement de pôles appliquée au système réduit :
+
+    \[
+    A_{\text{cl}} = A_{\text{lat}} - B_{\text{lat}} K_{pp}
+    \]
+
+    On a pour objectif d’obtenir :
+
+    - une **stabilité asymptotique** du système en boucle fermée,
+    - une **convergence rapide** de l’erreur de position latérale \( \Delta x(t) \), idéalement en moins de 20 secondes.
+
+    Pour le choix des pôles:
+
+    Après plusieurs tests, nous avons choisi d'accélérer la dynamique en plaçant les pôles plus à gauche :
+
+    \[
+    \texttt{desired\_poles} = [-2,\ -2.8,\ -3.1,\ -3.7]
+    \]
+
+    Ces valeurs garantissent non seulement la stabilité mais aussi une convergence beaucoup plus rapide que l’objectif initial.
+
+    La matrice de gains obtenue à l’aide de `place_poles` est :
+
+    \[
+    K_{pp} = [k_1,\ k_2,\ k_3,\ k_4]
+    \]
+
+    Elle définit la loi de commande :
+
+    \[
+    \Delta \phi(t) = -K_{pp} \cdot \mathbf{x}_{\text{lat}}(t)
+    \]
+
+    où \( \mathbf{x}_{\text{lat}}(t) = [\Delta x,\ \Delta \dot{x},\ \Delta \theta,\ \Delta \dot{\theta}]^\top \).
+
+    Ce que on observe:
+
+    - L’erreur de position latérale \( \Delta x(t) \), initialement à 1 m, présente un léger dépassement (jusqu’à ~1.2 m à \( t = 1\,s \)), avant de converger vers zéro en environ **4 secondes**.
+    - L’angle \( \Delta \theta(t) \) reste bien à l’intérieur de la limite \( \pm \pi/2 \).
+    - La commande \( \Delta \phi(t) \) respecte également la contrainte physique \( |\Delta \phi(t)| < \pi/2 \).
+
+    Cette approche par placement de pôles permet une stabilisation rapide et efficace du système, tout en respectant les contraintes dynamiques et physiques.
+
+    """
+    )
+    return
+
+
+@app.cell
+def _(A_lat, B_lat):
+    def _():
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from scipy.signal import place_poles, StateSpace, lsim
+
+
+        desired_poles = [-2, -2.8, -3.1, -3.7]
+        K_pp = place_poles(A_lat, B_lat, desired_poles).gain_matrix
+        print("K_pp =", K_pp)
+
+        A_cl = A_lat - B_lat @ K_pp
+
+
+        t = np.linspace(0, 20, 1000)
+        x0 = np.array([1.0, 0.0, 0.1, 0.0])
+        sys_cl = StateSpace(A_cl, np.zeros((4, 1)), np.eye(4), np.zeros((4, 1)))
+        _, y, _ = lsim(sys_cl, U=np.zeros_like(t), T=t, X0=x0)
+
+
+        delta_x = y[:, 0]
+        delta_theta = y[:, 2]
+        delta_phi = - (y @ K_pp.T).flatten()
+
+        plt.figure(figsize=(12, 5))
+
+        plt.subplot(1, 2, 1)
+        plt.plot(t, delta_x, label=r"$\Delta x(t)$")
+        plt.axhline(0.1, color='gray', linestyle='--')
+        plt.axhline(-0.1, color='gray', linestyle='--')
+        plt.title("Erreur de position latérale")
+        plt.xlabel("Temps [s]")
+        plt.ylabel("Δx [m]")
+        plt.grid()
+        plt.legend()
+
+        plt.subplot(1, 2, 2)
+        plt.plot(t, delta_phi, label=r"$\Delta \phi(t)$")
+        plt.axhline(np.pi/2, color='r', linestyle='--', label='±π/2')
+        plt.axhline(-np.pi/2, color='r', linestyle='--')
+        plt.title("Commande d'inclinaison")
+        plt.xlabel("Temps [s]")
+        plt.ylabel("ϕ [rad]")
+        plt.grid()
+        plt.legend()
+
+        plt.tight_layout()
+        return plt.show()
+
+
+    _()
     return
 
 

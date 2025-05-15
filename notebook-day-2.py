@@ -1155,6 +1155,36 @@ def _(mo):
     return
 
 
+@app.cell
+def _(mo):
+    mo.md(
+        r"""
+    La stabilité du système linéaire est déterminée par les *valeurs propres* de la matrice \(A\), c’est-à-dire les racines du polynôme caractéristique \(\det(A - \lambda I) = 0\).
+
+    En observant la forme de \(A\), on remarque :
+
+    - c'est une matrice *non diagonalisable* avec plusieurs zéros sur la diagonale,
+    - elle possède *au moins trois valeurs propres nulles* (\(\lambda = 0\)),
+    - les autres valeurs propres proviennent des sous-systèmes \((x, \dot{x}, \theta)\), dont la dynamique n’est pas stabilisée.
+
+    En calculant les valeurs propres, on trouve typiquement :
+
+    \[
+    \lambda \in \{ 0, 0, 0, 0, \pm \sqrt{g}i \}
+    \]
+
+    Cela signifie que la matrice \(A\) *n’a pas toutes ses valeurs propres à partie réelle strictement négative*
+
+
+    Le système **n’est pas asymptotiquement stable**.
+
+    Une commande est donc *nécessaire pour stabiliser* le booster autour de sa position d’équilibre.
+
+    """
+    )
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(

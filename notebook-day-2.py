@@ -990,6 +990,39 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
+    On cherche les configurations d’équilibre du système sous les hypothèses suivantes :  
+    \( |\theta| < \frac{\pi}{2} \), \( |\phi| < \frac{\pi}{2} \), et \( f > 0 \).
+
+    À l’équilibre, toutes les **accélérations** sont nulles :
+
+    - \( \ddot{x} = 0 \Rightarrow \sin(\theta + \phi) = 0 \Rightarrow \theta + \phi = 0 \)
+    - \( \ddot{y} = 0 \Rightarrow f \cos(\theta + \phi) = Mg \Rightarrow f = Mg \)
+    - \( \ddot{\theta} = 0 \Rightarrow \sin(\phi) = 0 \Rightarrow \phi = 0 \)
+
+    En remplaçant dans la première équation, on obtient :  
+    🔹 \( \theta = 0 \), \( \phi = 0 \), \( f = Mg \)
+
+    En considérant les constantes données dans le modèle :  
+    \( M = 1\,\text{kg}, \quad g = 1\,\text{m/s}^2 \Rightarrow f = 1\,\text{N} \)
+
+
+    Les équilibres ne contraignent pas directement les vitesses \( \dot{x} \) et \( \dot{y} \) : tant que les accélérations sont nulles, on peut avoir des vitesses constantes.  
+    Autrement dit, \( \dot{x} \) et \( \dot{y} \) peuvent être **arbitraires** — le système peut continuer à se déplacer horizontalement ou verticalement de manière uniforme sans sortir de l’état d’équilibre dynamique.
+
+    La seule configuration d’équilibre statique (en position) est :  
+    \(\theta = 0, \quad \phi = 0, \quad f = Mg\)
+
+    Mais les vitesses \( \dot{x} \) et \( \dot{y} \) restent libres à l’équilibre : le système peut être en mouvement uniforme dans n’importe quelle direction.
+
+    """
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
     ## 🧩 Linearized Model
 
     Introduce the error variables $\Delta x$, $\Delta y$, $\Delta \theta$, and $\Delta f$ and $\Delta \phi$ of the state and input values with respect to the generic equilibrium configuration.
@@ -1159,6 +1192,21 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(mo):
+    mo.md(r"""Calcul des valeurs propres de \(A\) :""")
+    return
+
+
+@app.cell
+def _(A, np):
+    valeurs_propres = np.linalg.eigvals(A)
+
+    print("Valeurs propres de la matrice A :")
+    print(valeurs_propres)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
     mo.md(
         r"""
     La stabilité du système linéaire est déterminée par les *valeurs propres* de la matrice \(A\), c’est-à-dire les racines du polynôme caractéristique \(\det(A - \lambda I) = 0\).
@@ -1167,16 +1215,10 @@ def _(mo):
     On calcule les valeurs propres, on trouve :
 
     \[
-    \lambda \in \{ 0, 0, 0, 0, + \sqrt{g}i, - \sqrt{g}i \}
+    \lambda \in \{ 0, 0, 0, 0, 0, 0 \}
     \]
 
-    Cela signifie que la matrice \(A\) n’a pas toutes ses valeurs propres à partie réelle strictement négative.
-
-
-    Le système **n’est pas asymptotiquement stable**.
-
-    Une commande est donc *nécessaire pour stabiliser* le booster autour de sa position d’équilibre.
-
+    Les valeurs propres n'étant pas à parties réelles strictement négatives, le système **n’est pas asymptotiquement stable**.
     """
     )
     return

@@ -1069,6 +1069,84 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
+    On écrit le système linéarisé sous la forme d’état classique :
+
+    \[
+    \dot{X} = A X + B U
+    \quad \text{avec} \quad
+    X =
+    \begin{bmatrix}
+    \Delta x \\
+    \Delta \dot{x} \\
+    \Delta y \\
+    \Delta \dot{y} \\
+    \Delta \theta \\
+    \Delta \dot{\theta}
+    \end{bmatrix},
+    \quad
+    U =
+    \begin{bmatrix}
+    \Delta f \\
+    \Delta \phi
+    \end{bmatrix}
+    \]
+
+    Les matrices \( A \) et \( B \) sont données par :
+
+    \[
+    A =
+    \begin{bmatrix}
+    0 & 1 & 0 & 0 & 0 & 0 \\
+    0 & 0 & 0 & 0 & -g & 0 \\
+    0 & 0 & 0 & 1 & 0 & 0 \\
+    0 & 0 & 0 & 0 & 0 & 0 \\
+    0 & 0 & 0 & 0 & 0 & 1 \\
+    0 & 0 & 0 & 0 & 0 & 0 \\
+    \end{bmatrix}
+    \quad , \quad
+    B =
+    \begin{bmatrix}
+    0 & 0 \\
+    0 & -g \\
+    0 & 0 \\
+    \frac{1}{M} & 0 \\
+    0 & 0 \\
+    0 & -\frac{Mg\ell}{J} \\
+    \end{bmatrix}
+    \]
+
+    """
+    )
+    return
+
+
+@app.cell
+def _(J, M, g, l, np):
+    A = np.array([
+        [0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, -g, 0],
+        [0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0, 0],
+    ])
+
+    B = np.array([
+        [0, 0],
+        [0, -g],
+        [0, 0],
+        [1/M, 0],
+        [0, 0],
+        [0, -M * g * l / J],
+    ])
+
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
     ## 🧩 Stability
 
     Is the generic equilibrium asymptotically stable?

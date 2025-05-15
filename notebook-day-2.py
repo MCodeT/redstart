@@ -975,7 +975,7 @@ def _(mo):
     - \( \ddot{\theta} = 0 \Rightarrow \sin(\phi) = 0 \Rightarrow \phi = 0 \)
 
     En remplaçant, on trouve :  
-    🔹 \( \theta = 0 \), \( \phi = 0 \), \( f = Mg \)
+    🔹 \( \theta = 0 \), \( \phi = 0 \), \( f = Mg = 1 \)
 
     C’est la seule configuration d’équilibre possible sous ces contraintes.
 
@@ -992,6 +992,61 @@ def _(mo):
 
     Introduce the error variables $\Delta x$, $\Delta y$, $\Delta \theta$, and $\Delta f$ and $\Delta \phi$ of the state and input values with respect to the generic equilibrium configuration.
     What are the linear ordinary differential equations that govern (approximately) these variables in a neighbourhood of the equilibrium?
+    """
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    Définissons les petites déviations autour de l’équilibre précédent :
+
+    \[
+    \Delta x = x - x^*,\quad
+    \Delta y = y - y^*,\quad
+    \Delta \theta = \theta - 0,\quad
+    \Delta f = f - M\,g,\quad
+    \Delta \phi = \phi - 0
+    \]
+
+    Nous notons également \(\Delta \dot x\), \(\Delta \dot y\), \(\Delta \dot \theta\) les déviations de vitesses.
+
+    En linéarisant l’EDO non linéaire au premier ordre (en négligeant les produits de petits termes) :
+
+    \[
+    \Delta \ddot x 
+    = -\frac{1}{M}\,(M\,g + \Delta f)\,\sin(\Delta\theta + \Delta\phi)
+    \;\approx\;
+    -\frac{M\,g}{M}\,(\Delta\theta + \Delta\phi)
+    \;=\;
+    -g\,(\Delta\theta + \Delta\phi),
+    \]
+
+    \[
+    \Delta \ddot y 
+    = \frac{M\,g + \Delta f}{M}\,\cos(\Delta\theta + \Delta\phi)\;-\;g
+    \;\approx\;
+    \frac{\Delta f}{M},
+    \]
+
+    \[
+    \Delta \ddot \theta
+    = -\frac{l\,(M\,g + \Delta f)}{J}\,\sin(\Delta\phi)
+    \;\approx\;
+    -\frac{l\,M\,g}{J}\,\Delta\phi.
+    \]
+
+    alors:
+
+    \[
+    \begin{aligned}
+    \ddot{\Delta x} &= -g(\Delta \theta + \Delta \phi) \\
+    \ddot{\Delta y} &= \frac{1}{M} \Delta f \\
+    \ddot{\Delta \theta} &= -\frac{Mg\ell}{J} \Delta \phi
+    \end{aligned}
+    \]
     """
     )
     return

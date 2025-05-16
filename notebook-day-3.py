@@ -1711,44 +1711,52 @@ def _():
         import numpy as np
         import matplotlib.pyplot as plt
 
-        x1, y1 = 2, 1   
-        x2, y2 = 0, 3  
+        # Booster endpoints: base and top
+        x1, y1 = 2, 1   # base of the booster
+        x2, y2 = 0, 3   # top of the booster
 
-    
+        # Center of mass
         center_x = (x1 + x2) / 2
         center_y = (y1 + y2) / 2
 
-        target_x = center_x - (1/3) * (center_x - x1)
-        target_y = center_y - (1/3) * (center_y - y1)
+        # Compute vector from CM to top (not base)
+        target_x = center_x + (1/3) * (x2 - center_x)
+        target_y = center_y + (1/3) * (y2 - center_y)
 
+        # Booster orientation
         booster_angle = np.arctan2(y2 - y1, x2 - x1)
 
+        # Flame: tilt and direction
         flame_length = 0.5
-        flame_tilt = np.pi / 12 
-        flame_angle = booster_angle + np.pi + flame_tilt  
+        flame_tilt = np.pi / 12  # slight tilt
+        flame_angle = booster_angle + np.pi + flame_tilt  # opposite booster direction
 
         flame_x = x1 + flame_length * np.cos(flame_angle)
         flame_y = y1 + flame_length * np.sin(flame_angle)
 
+        # Plotting
         plt.figure(figsize=(6, 6))
         plt.plot([x1, x2], [y1, y2], 'k-', linewidth=3, label='Booster')
         plt.plot(center_x, center_y, 'bo', label='Center of Mass')
-        plt.plot(target_x, target_y, 'o', color='#FFFF00', markersize=8, label='Point h (1/3 from CM to base)')
+        plt.plot(target_x, target_y, 'o', color='#FFFF00', markersize=8, label='Point h (1/3 toward tip)')
         plt.plot([x1, flame_x], [y1, flame_y], '-', color='orange', linewidth=2, label='Thrust Direction (Flame)')
 
+        # Annotations
         plt.text(center_x + 0.1, center_y, 'CM', fontsize=9)
         plt.text(target_x + 0.1, target_y, 'h', fontsize=9, color='darkorange')
 
+        # Styling
         plt.xlabel('X-axis')
         plt.ylabel('Y-axis')
-        plt.title('Geometrical Interpretation of $h$')
+        plt.title('Geometrical Interpretation of $h$ (above CM)')
         plt.axis('equal')
         plt.legend(loc='upper right')
         plt.grid(True)
+
         return plt.show()
 
-
     _()
+
     return
 
 
@@ -1768,309 +1776,9 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
-    ### First and Second Derivatives
-
-    1. *First derivative*  
-       \(  
-       \dot h
-       =
-       \begin{pmatrix}
-       \dot x - \tfrac{\ell}{3}\cos\theta\,\dot\theta \\[6pt]
-       \dot y - \tfrac{\ell}{3}\sin\theta\,\dot\theta
-       \end{pmatrix}.
-       \)
-
-    2. *Second derivative*  
-       First write
-     
-       $$\ddot h
-       =
-       \begin{pmatrix}
-       \ddot x 
-         + \tfrac{\ell}{3}\sin\theta\,\dot\theta^2
-         - \tfrac{\ell}{3}\cos\theta\,\ddot\theta \\[6pt]
-       \ddot y 
-         - \tfrac{\ell}{3}\cos\theta\,\dot\theta^2
-         - \tfrac{\ell}{3}\sin\theta\,\ddot\theta
-       \end{pmatrix}.$$
-   
-   
-       Substitute  
-       \( \ddot x = f_x / m,\;\ddot y = f_y / m\)  
-       with the auxiliary‐system outputs  
-       \(  
-       f_x 
-       = -\sin\bigl(\theta+\tfrac{\pi}{2}\bigr)\Bigl(z + m\tfrac{\ell}{3}\dot\theta^2\Bigr)
-         \;-\;\cos\bigl(\theta+\tfrac{\pi}{2}\bigr)\,\frac{m\ell\,v_2}{3\,z},  
-       \)  
-       \(  
-       f_y 
-       = \cos\bigl(\theta+\tfrac{\pi}{2}\bigr)\Bigl(z + m\tfrac{\ell}{3}\dot\theta^2\Bigr)
-         \;-\;\sin\bigl(\theta+\tfrac{\pi}{2}\bigr)\,\frac{m\ell\,v_2}{3\,z}.
-       \)  
-   
-       Using  
-       \(\sin(\theta+\tfrac{\pi}{2})=\cos\theta\),  
-       \(\cos(\theta+\tfrac{\pi}{2})=-\sin\theta\),  
-       the \(\dot\theta^2\) terms cancel.  The result is
-
-       \(  
-       \ddot h
-       =
-       \begin{pmatrix}
-       -\dfrac{z}{m}\,\sin\theta
-         \;-\;\dfrac{\ell}{3}\,\dfrac{v_2}{z}\,\cos\theta
-         \;-\;\dfrac{\ell}{3}\,\cos\theta\,\ddot\theta
-       \\[8pt]
-       \;\;\dfrac{z}{m}\,\cos\theta
-         \;-\;\dfrac{\ell}{3}\,\dfrac{v_2}{z}\,\sin\theta
-         \;-\;\dfrac{\ell}{3}\,\sin\theta\,\ddot\theta
-       \end{pmatrix}.
-       \)
-    """
-    )
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(
-        r"""
     ## 🧩 Third and Fourth-Order Derivatives 
 
     Compute the third derivative $h^{(3)}$ of $h$ as a function of $\theta$ and $z$ (and constants) and then the fourth derivative $h^{(4)}$ of $h$ with respect to time as a function of $\theta$, $\dot{\theta}$, $z$, $\dot{z}$, $v$ (and constants) when the auxiliary system is on.
-    """
-    )
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(
-        r"""
-    ## Third and Fourth Derivatives 
-
-    We start from the second derivative
-
-    \(
-    \ddot h =
-    \begin{pmatrix}
-    -\,\dfrac{z}{m}\,\sin\theta
-      \;-\;\dfrac{\ell}{3}\,\dfrac{v_2}{z}\,\cos\theta
-      \;-\;\tfrac{\ell}{3}\,\cos\theta\,\ddot\theta
-    \\[8pt]
-    \;\;\dfrac{z}{m}\,\cos\theta
-      \;-\;\dfrac{\ell}{3}\,\dfrac{v_2}{z}\,\sin\theta
-      \;-\;\tfrac{\ell}{3}\,\sin\theta\,\ddot\theta
-    \end{pmatrix}.
-    \)
-
-    Define the shorthands
-
-    \(
-    A = \frac{z}{m},\quad
-    \dot A = \frac{\dot z}{m},\quad
-    \ddot A = \frac{\ddot z}{m} = \frac{v_1}{m},
-    \)
-
-    \(
-    C = \frac{\ell}{3},\quad
-    B = C\,\frac{v_2}{z},\quad
-    \dot B = C\,\frac{z\,\dot v_2 - v_2\,\dot z}{z^2},\quad
-    \ddot B = C\!\Bigl(\frac{\ddot v_2}{z}
-    -2\,\frac{\dot v_2\,\dot z}{z^2}
-    -\frac{v_2\,\ddot z}{z^2}
-    +2\,\frac{v_2\,\dot z^2}{z^3}\Bigr).
-    \)
-
-    ---
-
-    ### 1. Third derivative
-
-    Differentiate each term of \(\ddot h\):
-
-    \(
-    h^{(3)} =
-    \frac{d}{dt}\,\ddot h
-    =
-    \begin{pmatrix}
-    -\,\dot A\,\sin\theta
-    -\,A\,\cos\theta\,\dot\theta
-    -\,\dot B\,\cos\theta
-    +\,B\,\sin\theta\,\dot\theta
-    +\,C\,\sin\theta\,\dot\theta\,\ddot\theta
-    -\,C\,\cos\theta\,\theta^{(3)}
-    \\[8pt]
-    \;\;\dot A\,\cos\theta
-    -\,A\,\sin\theta\,\dot\theta
-    -\,\dot B\,\sin\theta
-    -\,B\,\cos\theta\,\dot\theta
-    -\,C\,\cos\theta\,\dot\theta\,\ddot\theta
-    -\,C\,\sin\theta\,\theta^{(3)}
-    \end{pmatrix}.
-    \)
-
-    ---
-
-    ### 2. Fourth derivative
-
-    We now differentiate *term by term* in \(h^{(3)}\).  For the first component:
-
-    1. \(\frac{d}{dt}[-\dot A\,\sin\theta]
-       = -\,\ddot A\,\sin\theta
-         -\,\dot A\,\cos\theta\,\dot\theta.\)
-
-    2. \(\frac{d}{dt}[-A\,\cos\theta\,\dot\theta]
-       = -\,\dot A\,\cos\theta\,\dot\theta
-         +\,A\,\sin\theta\,\dot\theta^2
-         -\,A\,\cos\theta\,\ddot\theta.\)
-
-    3. \(\frac{d}{dt}[-\,\dot B\,\cos\theta]
-       = -\,\ddot B\,\cos\theta
-         +\,\dot B\,\sin\theta\,\dot\theta.\)
-
-    4. \(\frac{d}{dt}[\,B\,\sin\theta\,\dot\theta]
-       = \dot B\,\sin\theta\,\dot\theta
-         +\,B\,\cos\theta\,\dot\theta^2
-         +\,B\,\sin\theta\,\ddot\theta.\)
-
-    5. \(\frac{d}{dt}[\,C\,\sin\theta\,\dot\theta\,\ddot\theta]
-       = C\bigl(\cos\theta\,\dot\theta^2\,\ddot\theta
-               +\sin\theta\,\ddot\theta^2
-               +\sin\theta\,\dot\theta\,\theta^{(3)}\bigr).\)
-
-    6. \(\frac{d}{dt}[-\,C\,\cos\theta\,\theta^{(3)}]
-       = C\,\sin\theta\,\dot\theta\,\theta^{(3)}
-         -\,C\,\cos\theta\,\theta^{(4)}.\)
-
-    Summing these gives:
-
-    \(
-    \begin{aligned}
-    h^{(4)}_1 =\;&
-    -\,\ddot A\,\sin\theta
-    -2\,\dot A\,\cos\theta\,\dot\theta
-    +\;A\,\sin\theta\,\dot\theta^2
-    -\;A\,\cos\theta\,\ddot\theta\\
-    &-\,\ddot B\,\cos\theta
-    +2\,\dot B\,\sin\theta\,\dot\theta
-    +\;B\,\cos\theta\,\dot\theta^2
-    +\;B\,\sin\theta\,\ddot\theta\\
-    &+\;C\,\cos\theta\,\dot\theta^2\,\ddot\theta
-    +\;C\,\sin\theta\,\ddot\theta^2
-    +2\,C\,\sin\theta\,\dot\theta\,\theta^{(3)}
-    -\,C\,\cos\theta\,\theta^{(4)}.
-    \end{aligned}
-    \)
-
-    For the second component, term-by-term:
-
-    1. $\frac{d}{dt}[\dot A\,\cos\theta]
-       = \ddot A\,\cos\theta -\,\dot A\,\sin\theta\,\dot\theta.$
-
-    2. $\frac{d}{dt}[-A\,\sin\theta\,\dot\theta]
-       = -\,\dot A\,\sin\theta\,\dot\theta -\,A\,\cos\theta\,\dot\theta^2 -\,A\,\sin\theta\,\ddot\theta.$
-
-    3. $\frac{d}{dt}[-\dot B\,\sin\theta]
-       = -\,\ddot B\,\sin\theta -\,\dot B\,\cos\theta\,\dot\theta.$
-
-    4. $\frac{d}{dt}[-B\,\cos\theta\,\dot\theta]
-       = -\,\dot B\,\cos\theta\,\dot\theta +\,B\,\sin\theta\,\dot\theta^2 -\,B\,\cos\theta\,\ddot\theta.$
-
-    5. $\frac{d}{dt}[-\,C\,\cos\theta\,\dot\theta\,\ddot\theta]
-       = C\bigl(\sin\theta\,\dot\theta^2\,\ddot\theta -\cos\theta\,\ddot\theta^2 -\cos\theta\,\dot\theta\,\theta^{(3)}\bigr).$
-
-    6. $\frac{d}{dt}[-\,C\,\sin\theta\,\theta^{(3)}]
-       = -\,C\,\cos\theta\,\dot\theta\,\theta^{(3)} -\,C\,\sin\theta\,\theta^{(4)}.$
-
-    Summing yields:
-
-    \(
-    \begin{aligned}
-    h^{(4)}_2 =\;&
-    \ddot A\,\cos\theta
-    -2\,\dot A\,\sin\theta\,\dot\theta
-    -\;A\,\cos\theta\,\dot\theta^2
-    -\;A\,\sin\theta\,\ddot\theta\\
-    &-\,\ddot B\,\sin\theta
-    -2\,\dot B\,\cos\theta\,\dot\theta
-    +\;B\,\sin\theta\,\dot\theta^2
-    -\;B\,\cos\theta\,\ddot\theta\\
-    &+\;C\,\sin\theta\,\dot\theta^2\,\ddot\theta
-    -\;C\,\cos\theta\,\ddot\theta^2
-    -2\,C\,\cos\theta\,\dot\theta\,\theta^{(3)}
-    -\,C\,\sin\theta\,\theta^{(4)}.
-    \end{aligned}
-    \)
-
-    ---
-
-    ### 3. Replace \(A,B,C\) with original expressions
-
-    \(
-    A = \tfrac{z}{m},\quad
-    \dot A = \tfrac{\dot z}{m},\quad
-    \ddot A = \tfrac{v_1}{m},
-    \)
-
-    \(
-    C = \tfrac{\ell}{3},\quad
-    B = \tfrac{\ell}{3}\,\tfrac{v_2}{z},\quad
-    \dot B = \tfrac{\ell}{3}\,\tfrac{z\,\dot v_2 - v_2\,\dot z}{z^2},\quad
-    \ddot B = \tfrac{\ell}{3}\!\Bigl(\tfrac{\ddot v_2}{z}
-    -2\,\tfrac{\dot v_2\,\dot z}{z^2}
-    -\tfrac{v_2\,v_1}{z^2}
-    +2\,\tfrac{v_2\,\dot z^2}{z^3}\Bigr).
-    \)
-
-    Hence the *full* fourth derivative is
-
-    \(
-    \boxed{
-    h^{(4)} =
-    \begin{pmatrix}
-    -\,\tfrac{v_1}{m}\sin\theta
-    -2\,\tfrac{\dot z}{m}\cos\theta\,\dot\theta
-    +\tfrac{z}{m}\sin\theta\,\dot\theta^2
-    -\tfrac{z}{m}\cos\theta\,\ddot\theta
-    \\[4pt]
-    \quad
-    -\,\tfrac{\ell}{3}\Bigl(\tfrac{\ddot v_2}{z}
-    -2\,\tfrac{\dot v_2\,\dot z}{z^2}
-    -\tfrac{v_2\,v_1}{z^2}
-    +2\,\tfrac{v_2\,\dot z^2}{z^3}\Bigr)\cos\theta
-    +2\,\tfrac{\ell}{3}\tfrac{z\,\dot v_2 - v_2\,\dot z}{z^2}\sin\theta\,\dot\theta
-    +\tfrac{\ell}{3}\tfrac{v_2}{z}\cos\theta\,\dot\theta^2
-    +\tfrac{\ell}{3}\tfrac{v_2}{z}\sin\theta\,\ddot\theta
-    \\[6pt]
-    \quad
-    +\;\tfrac{\ell}{3}\bigl(\cos\theta\,\dot\theta^2\,\ddot\theta
-    +\sin\theta\,\ddot\theta^2
-    +2\,\sin\theta\,\dot\theta\,\theta^{(3)}\bigr)
-    -\,\tfrac{\ell}{3}\cos\theta\,\theta^{(4)}
-    \\[10pt]
-    \;\;\tfrac{v_1}{m}\cos\theta
-    -2\,\tfrac{\dot z}{m}\sin\theta\,\dot\theta
-    -\tfrac{z}{m}\cos\theta\,\dot\theta^2
-    -\tfrac{z}{m}\sin\theta\,\ddot\theta
-    \\[4pt]
-    \quad
-    -\,\tfrac{\ell}{3}\Bigl(\tfrac{\ddot v_2}{z}
-    -2\,\tfrac{\dot v_2\,\dot z}{z^2}
-    -\tfrac{v_2\,v_1}{z^2}
-    +2\,\tfrac{v_2\,\dot z^2}{z^3}\Bigr)\sin\theta
-    -2\,\tfrac{\ell}{3}\tfrac{z\,\dot v_2 - v_2\,\dot z}{z^2}\cos\theta\,\dot\theta
-    +\tfrac{\ell}{3}\tfrac{v_2}{z}\sin\theta\,\dot\theta^2
-    -\tfrac{\ell}{3}\tfrac{v_2}{z}\cos\theta\,\ddot\theta
-    \\[6pt]
-    \quad
-    +\;\tfrac{\ell}{3}\bigl(\sin\theta\,\dot\theta^2\,\ddot\theta
-    -\cos\theta\,\ddot\theta^2
-    -2\,\cos\theta\,\dot\theta\,\theta^{(3)}\bigr)
-    -\,\tfrac{\ell}{3}\sin\theta\,\theta^{(4)}
-    \end{pmatrix}
-    }
-    \)
     """
     )
     return

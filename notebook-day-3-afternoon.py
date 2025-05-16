@@ -2072,21 +2072,20 @@ def _(mo):
 def _(M, g, l, np):
     def T(x, dx, y, dy, theta, dtheta, z, dz):
  
-        # h
         hx = x - (l/3)*np.sin(theta)
         hy = y + (l/3)*np.cos(theta)
     
-        # first derivative
+
         dhx = dx - (l/3)*np.cos(theta)*dtheta
         dhy = dy - (l/3)*np.sin(theta)*dtheta
     
-        # second derivative
-        # ddot h = (1/M) * [sinθ; -cosθ] * z - [0; g]
+  
+    
         d2hx = (z/M) * np.sin(theta)
         d2hy = (z/M) * -np.cos(theta) - g
     
-        # third derivative
-        # h''' = (1/M)[ cosθ*dtheta*z + sinθ*dz; sinθ*dtheta*z - cosθ*dz ]
+    
+   
         d3hx = (1/M) * (np.cos(theta)*dtheta*z + np.sin(theta)*dz)
         d3hy = (1/M) * (np.sin(theta)*dtheta*z - np.cos(theta)*dz)
     
@@ -2096,7 +2095,7 @@ def _(M, g, l, np):
     values = T(x=0.5, dx=0.1, y=0.2, dy=0.05, theta=np.pi/4, dtheta=0.2, z=1.5, dz=0.3)
     print("hx, hy, dhx, dhy, d2hx, d2hy, d3hx, d3hy =")
     print(values)
-    return
+    return T, values
 
 
 @app.cell(hide_code=True)
@@ -2111,6 +2110,167 @@ def _(mo):
     Implement the corresponding function `T_inv`.
     """
     )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    We now show how, from the measurements
+    \(
+    h,\;\dot h,\;\ddot h,\;h^{(3)},
+    \)
+    one uniquely recovers the full state
+    \(
+    x,\;\dot x,\;y,\;\dot y,\;\theta,\;\dot\theta,\;z,\;\dot z.
+    \)
+    Assume \(z<0\) so signs are unambiguous.
+
+    ### Recover \(\theta\) and \(z\)
+
+    From the second derivative
+    \(
+    \ddot h
+    = \frac{1}{M}
+    \begin{pmatrix}
+    \sin\theta \\[3pt]
+    -\cos\theta
+    \end{pmatrix} z
+    \;-\;
+    \begin{pmatrix}
+    0\\
+    g
+    \end{pmatrix},
+    \)
+    denote
+    \(
+    a = \ddot h_x,
+    \quad
+    b = \ddot h_y + g.
+    \)
+    Then
+    \(
+    a = \frac{z}{M}\,\sin\theta,
+    \qquad
+    b = -\,\frac{z}{M}\,\cos\theta.
+    \)
+    Hence
+    \(
+    \tan\theta
+    = \frac{a}{-\,b},
+    \quad
+    \theta
+    = \operatorname{atan2}\!\bigl(a,\,-b\bigr),
+    \)
+    and
+    \(
+    z = M\,\frac{a}{\sin\theta}\quad(\,=M\,\frac{-b}{\cos\theta}\,).
+    \)
+
+
+    ### Recover \(\dot\theta\) and \(\dot z\)
+
+    From the third derivative
+    \(
+    h^{(3)}
+    = \frac{1}{M}
+    \begin{pmatrix}
+    \cos\theta\,\dot\theta\,z + \sin\theta\,\dot z \\[3pt]
+    \sin\theta\,\dot\theta\,z - \cos\theta\,\dot z
+    \end{pmatrix},
+    \)
+    denote
+    \(
+    c = h^{(3)}_x,\quad
+    d = h^{(3)}_y.
+    \)
+    Solve the linear system for
+    \(\alpha = \dot\theta\,z\) and \(\beta = \dot z\):
+    \(
+    \begin{cases}
+    \cos\theta\,\alpha + \sin\theta\,\beta = M\,c,\\[4pt]
+    \sin\theta\,\alpha - \cos\theta\,\beta = M\,d.
+    \end{cases}
+    \)
+    One finds
+    \(
+    \alpha = M\bigl(c\cos\theta + d\sin\theta\bigr),
+    \quad
+    \beta  = M\bigl(c\sin\theta - d\cos\theta\bigr).
+    \)
+    Therefore
+    \(
+    \dot\theta = \frac{\alpha}{z},
+    \quad
+    \dot z    = \beta.
+    \)
+
+    ###Recover \(x,y,\dot x,\dot y\)
+
+    From
+    \(
+    h = 
+    \begin{pmatrix}
+    x - \tfrac{\ell}{3}\sin\theta \\[3pt]
+    y + \tfrac{\ell}{3}\cos\theta
+    \end{pmatrix},
+    \quad
+    \dot h =
+    \begin{pmatrix}
+    \dot x - \tfrac{\ell}{3}\cos\theta\,\dot\theta \\[3pt]
+    \dot y - \tfrac{\ell}{3}\sin\theta\,\dot\theta
+    \end{pmatrix},
+    \)
+    we immediately get   
+
+    $$
+    x = h_x + \frac{\ell}{3}\sin\theta,\quad
+    \dot x = \dot h_x + \frac{\ell}{3}\cos\theta\,\dot\theta   
+    $$
+
+
+    $$
+    y = h_y - \frac{\ell}{3}\cos\theta,\quad
+    \dot y = \dot h_y + \frac{\ell}{3}\sin\theta\,\dot\theta
+    $$
+    """
+    )
+    return
+
+
+@app.cell
+def _(M, T, g, l, np, values):
+    #h_x, h_y, dh_x, dh_y, d2h_x, d2h_y, d3h_x, d3h_y
+    def T_inv(hx, hy, dhx, dhy, d2hx, d2hy, d3hx, d3hy):    
+        # 1) theta and z
+        a = d2hx
+        b = d2hy + g
+        theta = np.arctan2(a, -b)
+        # avoid division by zero
+        sin_t = np.sin(theta)
+        cos_t = np.cos(theta)
+        z = M * a / sin_t
+    
+        # 2) dtheta and dz
+        c = d3hx
+        d = d3hy
+        alpha = M * (c * cos_t + d * sin_t)   # = dtheta * z
+        beta  = M * (c * sin_t - d * cos_t)   # = dz
+        dtheta = alpha / z
+        dz     = beta
+    
+        # 3) x, xdot, y, ydot
+        x   = hx + (l/3)*sin_t
+        dx  = dhx + (l/3)*cos_t*dtheta
+        y   = hy - (l/3)*cos_t
+        dy  = dhy + (l/3)*sin_t*dtheta
+    
+        return x, dx, y, dy, theta, dtheta, z, dz
+    values_ = T(x=0.5, dx=0.1, y=0.2, dy=0.05, theta=np.pi/4, dtheta=0.2, z=1.5, dz=0.3)
+    recovered = T_inv(*values)
+    print("x, dx, y, dy, theta, dtheta, z, dz =")
+    print(recovered)
     return
 
 
@@ -2149,6 +2309,90 @@ def _(mo):
     that returns a function `fun` such that `fun(t)` is a value of `x, dx, y, dy, theta, dtheta, z, dz, f, phi` at time `t` that match the initial and final values provided as arguments to `compute`.
     """
     )
+    return
+
+
+@app.function
+def compute(
+    x_0, dx_0, y_0, dy_0, theta_0, dtheta_0, z_0, dz_0,
+    x_tf, dx_tf, y_tf, dy_tf, theta_tf, dtheta_tf, z_tf, dz_tf,
+    tf
+):
+    import numpy as np
+
+    def cubic(a0, a1, a2, a3, t):
+        return a0 * t**3 + a1 * t**2 + a2 * t + a3
+
+    def cubic_coeffs(p0, v0, pf, vf, tf):
+        T = tf
+        A = np.array([
+            [T**3, T**2, T, 1],
+            [3*T**2, 2*T, 1, 0],
+            [0, 0, 0, 1],
+            [0, 0, 1, 0]
+        ])
+        b = np.array([pf, vf, p0, v0])
+        return np.linalg.solve(A, b)
+
+    ax = cubic_coeffs(x_0, dx_0, x_tf, dx_tf, tf)
+    ay = cubic_coeffs(y_0, dy_0, y_tf, dy_tf, tf)
+    atheta = cubic_coeffs(theta_0, dtheta_0, theta_tf, dtheta_tf, tf)
+    az = cubic_coeffs(z_0, dz_0, z_tf, dz_tf, tf)
+
+    M = 1.0
+    l = 1.0
+
+    def fun(t):
+        x = cubic(*ax, t)
+        dx = 3*ax[0]*t**2 + 2*ax[1]*t + ax[2]
+        ddx = 6*ax[0]*t + 2*ax[1]
+
+        y = cubic(*ay, t)
+        dy = 3*ay[0]*t**2 + 2*ay[1]*t + ay[2]
+        ddy = 6*ay[0]*t + 2*ay[1]
+
+        theta = cubic(*atheta, t)
+        dtheta = 3*atheta[0]*t**2 + 2*atheta[1]*t + atheta[2]
+        ddtheta = 6*atheta[0]*t + 2*atheta[1]
+
+        z = cubic(*az, t)
+        dz = 3*az[0]*t**2 + 2*az[1]*t + az[2]
+        ddz = 6*az[0]*t + 2*az[1]
+
+        if z == 0:
+            raise ValueError("z = 0 -> division by zero in control computation")
+
+        # Compute f_x and f_y from inverse transformation
+        inner = np.array([
+            z - M*l/3 * dtheta**2,
+            M*l * ddz / (3*z)
+        ])
+        R = np.array([
+            [np.cos(theta - np.pi/2), -np.sin(theta - np.pi/2)],
+            [np.sin(theta - np.pi/2),  np.cos(theta - np.pi/2)]
+        ])
+        f_vec = R @ inner
+        fx, fy = f_vec
+
+        f = np.sqrt(fx**2 + fy**2)
+        phi = np.arctan2(-fx, fy) - theta
+
+        return np.array([x, dx, y, dy, theta, dtheta, z, dz, f, phi])
+
+    return fun
+
+
+@app.cell
+def _():
+    traj = compute(
+        x_0=0, dx_0=0, y_0=10, dy_0=0, theta_0=0, dtheta_0=0,
+        z_0=1, dz_0=0, x_tf=0, dx_tf=0, y_tf=1, dy_tf=0,
+        theta_tf=0, dtheta_tf=0, z_tf=1, dz_tf=0, tf=5
+    )
+
+    # Evaluate state and input at time t = 2.5
+    print(traj(2.5))
+
     return
 
 

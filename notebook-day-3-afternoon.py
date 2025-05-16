@@ -1690,6 +1690,7 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
+    #New drawing please correct 
     The point \( h \in \mathbb{R}^2 \) is defined as:
 
     \[
@@ -2271,7 +2272,7 @@ def _(M, T, g, l, np, values):
     recovered = T_inv(*values)
     print("x, dx, y, dy, theta, dtheta, z, dz =")
     print(recovered)
-    return
+    return (T_inv,)
 
 
 @app.cell(hide_code=True)
@@ -2350,128 +2351,87 @@ def _(mo):
 
 
 @app.cell
-def _():
-    def _():
-        import numpy as np
+def _(T, T_inv, np):
+    def hermite_coeffs(y0, y0p, y0pp, y0ppp, y1, y1p, y1pp, y1ppp, T):
+        c0 = y0
+        c1 = y0p
+        c2 = y0pp / 2
+        c3 = y0ppp / 6
+    
+        M = np.zeros((4, 4))
+        v = np.zeros(4)
+    
+        for j, i in enumerate([4, 5, 6, 7]):
+            M[0, j] = T**i
+            M[1, j] = i * T**(i - 1)
+            M[2, j] = i * (i - 1) * T**(i - 2)
+            M[3, j] = i * (i - 1) * (i - 2) * T**(i - 3)
+    
+        v[0] = y1  - (c0 + c1*T + c2*T**2 + c3*T**3)
+        v[1] = y1p - (c1 + 2*c2*T + 3*c3*T**2)
+        v[2] = y1pp - (2*c2 + 6*c3*T)
+        v[3] = y1ppp - (6*c3)
+    
+        c4567 = np.linalg.solve(M, v)
+        return np.concatenate(([c0, c1, c2, c3], c4567))
 
-        def hermite_coeffs(y0, y0p, y0pp, y0ppp, y1, y1p, y1pp, y1ppp, T):
-            c0 = y0
-            c1 = y0p
-            c2 = y0pp / 2
-            c3 = y0ppp / 6
-        
-            M = np.zeros((4, 4))
-            v = np.zeros(4)
-        
-            for j, i in enumerate([4, 5, 6, 7]):
-                M[0, j] = T**i
-                M[1, j] = i * T**(i - 1)
-                M[2, j] = i * (i - 1) * T**(i - 2)
-                M[3, j] = i * (i - 1) * (i - 2) * T**(i - 3)
-        
-            v[0] = y1  - (c0 + c1*T + c2*T**2 + c3*T**3)
-            v[1] = y1p - (c1 + 2*c2*T + 3*c3*T**2)
-            v[2] = y1pp - (2*c2 + 6*c3*T)
-            v[3] = y1ppp - (6*c3)
-        
-            c4567 = np.linalg.solve(M, v)
-            return np.concatenate(([c0, c1, c2, c3], c4567))
 
-        def T(x, dx, y, dy, theta, dtheta, z, dz):
-            hx = x - (1.0/3)*np.sin(theta)  
-            hy = y + (1.0/3)*np.cos(theta)
-            dhx = dx - (1.0/3)*np.cos(theta)*dtheta
-            dhy = dy - (1.0/3)*np.sin(theta)*dtheta
-            d2hx = 0.0  # Placeholder
-            d2hy = 0.0  # Placeholder
-            d3hx = 0.0  # Placeholder
-            d3hy = 0.0  # Placeholder
-            return hx, hy, dhx, dhy, d2hx, d2hy, d3hx, d3hy
+    def compute(
+        x_0, dx_0, y_0, dy_0, theta_0, dtheta_0, z_0, dz_0,
+        x_tf, dx_tf, y_tf, dy_tf, theta_tf, dtheta_tf, z_tf, dz_tf,
+        tf,
+        M=1.0,
+        g=1,
+        l=1.0
+    ):
+        hx0, hy0, dhx0, dhy0, d2hx0, d2hy0, d3hx0, d3hy0 = T(
+            x_0, dx_0, y_0, dy_0, theta_0, dtheta_0, z_0, dz_0
+        )
+        hxt, hyt, dhxt, dhyt, d2hxt, d2hyt, d3hxt, d3hyt = T(
+            x_tf, dx_tf, y_tf, dy_tf, theta_tf, dtheta_tf, z_tf, dz_tf
+        )
 
-        def T_inv(hx, hy, dhx, dhy, d2hx, d2hy, d3hx, d3hy):
-            x = hx + (1.0/3)*np.sin(0)  # Assume theta=0 for dummy
-            y = hy - (1.0/3)*np.cos(0)
-            dx = dhx
-            dy = dhy
-            theta = 0.0
-            dtheta = 0.0
-            z = -1  # dummy gravity
-            dz = 0.0
-            return x, dx, y, dy, theta, dtheta, z, dz
+        cx = hermite_coeffs(hx0, dhx0, d2hx0, d3hx0,
+                            hxt, dhxt, d2hxt, d3hxt, tf)
+        cy = hermite_coeffs(hy0, dhy0, d2hy0, d3hy0,
+                            hyt, dhyt, d2hyt, d3hyt, tf)
 
-        def compute(
-            x_0, dx_0, y_0, dy_0, theta_0, dtheta_0, z_0, dz_0,
-            x_tf, dx_tf, y_tf, dy_tf, theta_tf, dtheta_tf, z_tf, dz_tf,
-            tf,
-            M=1.0,
-            g=1,
-            l=1.0
-        ):
-            hx0, hy0, dhx0, dhy0, d2hx0, d2hy0, d3hx0, d3hy0 = T(
-                x_0, dx_0, y_0, dy_0, theta_0, dtheta_0, z_0, dz_0
+        dx_c  = np.array([i*cx[i]           for i in range(1,8)])
+        d2x_c = np.array([i*(i-1)*cx[i]     for i in range(2,8)])
+        d3x_c = np.array([i*(i-1)*(i-2)*cx[i] for i in range(3,8)])
+        dy_c  = np.array([i*cy[i]           for i in range(1,8)])
+        d2y_c = np.array([i*(i-1)*cy[i]     for i in range(2,8)])
+        d3y_c = np.array([i*(i-1)*(i-2)*cy[i] for i in range(3,8)])
+
+        def fun(t):
+            tp  = np.array([t**i for i in range(8)])
+            t1  = np.array([t**i for i in range(7)])
+            t2  = np.array([t**i for i in range(6)])
+            t3  = np.array([t**i for i in range(5)])
+
+            hx   = cx   @ tp
+            hy   = cy   @ tp
+            dhx  = dx_c @ t1
+            dhy  = dy_c @ t1
+            d2hx = d2x_c @ t2
+            d2hy = d2y_c @ t2
+            d3hx = d3x_c @ t3
+            d3hy = d3y_c @ t3
+
+            x, dx, y, dy, theta, dtheta, z, dz = T_inv(
+                hx, hy, dhx, dhy, d2hx, d2hy, d3hx, d3hy
             )
-            hxt, hyt, dhxt, dhyt, d2hxt, d2hyt, d3hxt, d3hyt = T(
-                x_tf, dx_tf, y_tf, dy_tf, theta_tf, dtheta_tf, z_tf, dz_tf
-            )
 
-            cx = hermite_coeffs(hx0, dhx0, d2hx0, d3hx0,
-                                hxt, dhxt, d2hxt, d3hxt, tf)
-            cy = hermite_coeffs(hy0, dhy0, d2hy0, d3hy0,
-                                hyt, dhyt, d2hyt, d3hyt, tf)
+            fx = M * d2hx
+            fy = M * (d2hy + g)
+            f = np.hypot(fx, fy)
+            phi = np.arctan2(fy, fx)
 
-            dx_c  = np.array([i*cx[i]           for i in range(1,8)])
-            d2x_c = np.array([i*(i-1)*cx[i]     for i in range(2,8)])
-            d3x_c = np.array([i*(i-1)*(i-2)*cx[i] for i in range(3,8)])
-            dy_c  = np.array([i*cy[i]           for i in range(1,8)])
-            d2y_c = np.array([i*(i-1)*cy[i]     for i in range(2,8)])
-            d3y_c = np.array([i*(i-1)*(i-2)*cy[i] for i in range(3,8)])
+            return np.array([x, dx, y, dy, theta, dtheta, z, dz, f, phi])
 
-            def fun(t):
-                tp  = np.array([t**i for i in range(8)])
-                t1  = np.array([t**i for i in range(7)])
-                t2  = np.array([t**i for i in range(6)])
-                t3  = np.array([t**i for i in range(5)])
+        return fun
 
-                hx   = cx   @ tp
-                hy   = cy   @ tp
-                dhx  = dx_c @ t1
-                dhy  = dy_c @ t1
-                d2hx = d2x_c @ t2
-                d2hy = d2y_c @ t2
-                d3hx = d3x_c @ t3
-                d3hy = d3y_c @ t3
-
-                x, dx, y, dy, theta, dtheta, z, dz = T_inv(
-                    hx, hy, dhx, dhy, d2hx, d2hy, d3hx, d3hy
-                )
-
-                fx = M * d2hx
-                fy = M * (d2hy + g)
-                f = np.hypot(fx, fy)
-                phi = np.arctan2(fy, fx)
-
-                return np.array([x, dx, y, dy, theta, dtheta, z, dz, f, phi])
-
-            return fun
-
-
-
-        if __name__ == "__main__":
-            traj = compute(
-                0.5, 0.1, 0.2, 0.05,
-                np.pi/4, 0.2, 1.5, 0.3,
-                1.0, 0.0, 0.0, 0.0,
-                np.pi/3, 0.0, -1.0, 0.0,
-                2.0
-            )
-            print("State and input at t=0:")
-            print(traj(0))
-            print("State and input at t=2.0:")
-        return print(traj(2.0))
-
-
-    _()
-    return
+    return (compute,)
 
 
 @app.cell(hide_code=True)
@@ -2493,7 +2453,134 @@ def _(mo):
 
 
 @app.cell
-def _():
+def _(FFMpegWriter, FuncAnimation, M, R, compute, g, l, mo, np, plt, tqdm):
+    x0, dx0, y0, dy0        = 5.0, 0.0, 20.0, -1.0
+    theta0, dtheta0, z0, dz0 = -np.pi/8, 0.0, -M*g, 0.0
+    xT, dxT, yT, dyT        = 0.0, 0.0, 4/3*l, 0.0
+    thetaT, dthetaT, zT, dzT = 0.0, 0.0, -M*g, 0.0
+    tf = 10.0
+
+    # 2) Trajectory generator
+    traj = compute(
+        x0, dx0, y0, dy0, theta0, dtheta0, z0, dz0,
+        xT, dxT, yT, dyT, thetaT, dthetaT, zT, dzT,
+        tf
+    )
+
+    # 3) Sample time series
+    ts = np.linspace(0, tf, 200)
+    data = np.array([traj(t) for t in ts])
+    x, dx, y, dy, theta, dtheta, z, dz, f, phi = data.T
+
+    # 4) Plot states vs time
+    fig1, axes = plt.subplots(4, 2, figsize=(12, 10))
+    for ax, series, label in zip(axes.flatten(),
+                                [x, dx, y, dy, theta, dtheta, z, dz],
+                                ['x','dx','y','dy','θ','dθ','z','dz']):
+        ax.plot(ts, series)
+        ax.set_ylabel(label)
+        ax.set_xlabel('t')
+        ax.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+    # 5) Plot inputs vs time
+    fig2, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+    ax1.plot(ts, f)
+    ax1.set_title('Thrust f')
+    ax1.set_xlabel('t')
+    ax1.grid(True)
+
+    ax2.plot(ts, phi)
+    ax2.set_title('Direction φ')
+    ax2.set_xlabel('t')
+    ax2.grid(True)
+
+    plt.tight_layout()
+    plt.show()
+
+
+    def draw_booster2(x=0, y=0, theta=0.0, f=0.0, phi=0.0, axes=None):
+ 
+        if axes is None:
+            _, axes = plt.subplots()
+        axes.set_facecolor('#F0F9FF')
+    
+        # 1) ground (zorder=0)
+        ground = np.array([[-2*l, 0],
+                           [ 2*l, 0],
+                           [ 2*l,-l],
+                           [-2*l,-l],
+                           [-2*l, 0]]).T
+        axes.fill(ground[0], ground[1], color="#E3A857", zorder=0)
+    
+        # Unit axis up along the booster
+        u = np.array([-np.sin(theta), np.cos(theta)])
+        base = np.array([x, y]) - l*u
+    
+        # 2) flame (zorder=1): 
+        flame_w = l/10
+        flame_h = (l/(M*g)) * f
+        coords = np.array([
+            [base[0] - flame_w, base[1]],
+            [base[0] - flame_w, base[1] - flame_h],
+            [base[0] + flame_w, base[1] - flame_h],
+            [base[0] + flame_w, base[1]],
+            [base[0] - flame_w, base[1]]
+        ]).T
+        axes.fill(coords[0], coords[1], color="#FF4500", zorder=1)
+    
+        b_local = np.array([
+            [ l/10,  l    ],
+            [ l/10, -l    ],
+            [ 0,    -l-l/10],
+            [-l/10, -l    ],
+            [-l/10,  l    ],
+            [ l/10,  l    ]
+        ]).T
+        b_local[1,:] *= -1
+        # rotate and translate
+        b = R(theta) @ b_local
+        axes.fill(b[0] + x, b[1] + y, color="black", zorder=2)
+    
+        return axes
+
+    fig3 = plt.figure(figsize=(6, 8))
+    ax3  = fig3.add_subplot(111)
+    fps  = 30
+    times = np.linspace(0, tf, int(tf*fps) + 1)
+    pbar  = tqdm(total=len(times), desc="Generating video...")
+
+    def animate(t):
+        ax3.clear()
+        x_, dx_, y_, dy_, th, dth, z_, dz_, f_, ph_ = traj(t)
+
+        draw_booster2(
+            x=x_,
+            y=y_,
+            theta=th + np.pi,   # flip booster orientation
+            f=f_,
+            phi=ph_ + np.pi,     # also flip flame direction
+            axes=ax3
+        )
+
+        ax3.set_xlim(-8*l, 8*l)
+        ax3.set_ylim(-2*l, 24*l)
+        ax3.set_aspect('equal')
+        ax3.grid(True)
+        ax3.set_title(f"t = {t:.1f}")
+        pbar.update(1)
+    
+
+
+    anim = FuncAnimation(fig3, animate, frames=times, interval=1000/fps)
+    writer = FFMpegWriter(fps=fps)
+    anim.save('admissible_path.mp4', writer=writer)
+    pbar.close()
+
+
+    print("Animation saved as 'admissible_path.mp4'")
+    mo.video(src='admissible_path.mp4')
     return
 
 

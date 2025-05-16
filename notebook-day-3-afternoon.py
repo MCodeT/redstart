@@ -2271,7 +2271,7 @@ def _(M, T, g, l, np, values):
     recovered = T_inv(*values)
     print("x, dx, y, dy, theta, dtheta, z, dz =")
     print(recovered)
-    return (T_inv,)
+    return
 
 
 @app.cell(hide_code=True)
@@ -2332,8 +2332,9 @@ def _(mo):
    
        by calling your function T(...) on the known initial and final states.
 
-    *Hermite interpolation*  
-       Build two 7th-degree polynomials \(h_x(t)\) and \(h_y(t)\) that match those eight boundary values (value, 1st, 2nd, 3rd derivatives at both ends).  This ensures continuity of position, velocity, acceleration and jerk.
+    *Hermite interpolation* as we have seen in the robotics course 
+
+    Build two 7th-degree polynomials \(h_x(t)\) and \(h_y(t)\) that match those eight boundary values (value, 1st, 2nd, 3rd derivatives at both ends).  This ensures continuity of position, velocity, acceleration and jerk.
 
     *Invert back to state*  
        At any \(t\), evaluate \(h(h_x,h_y)\) and its first three derivatives, then recover  
@@ -2349,83 +2350,129 @@ def _(mo):
 
 
 @app.cell
-def _(M, T, T_inv, g, np):
-    def hermite_coeffs(y0, y0p, y0pp, y0ppp, y1, y1p, y1pp, y1ppp, T):
-        c0 = y0
-        c1 = y0p
-        c2 = y0pp / 2
-        c3 = y0ppp / 6
-    
-        M = np.zeros((4, 4))
-        v = np.zeros(4)
-    
-        for j, i in enumerate([4, 5, 6, 7]):
-            M[0, j] = T**i
-            M[1, j] = i * T**(i-1)
-            M[2, j] = i*(i-1) * T**(i-2)
-            M[3, j] = i*(i-1)(i-2) * T*(i-3)
-    
-        v[0] = y1  - (c0 + c1*T + c2*T*2 + c3*T*3)
-        v[1] = y1p - (c1 + 2*c2*T + 3*c3*T**2)
-        v[2] = y1pp - (2*c2 + 6*c3*T)
-        v[3] = y1ppp - (6*c3)
-    
-        c4567 = np.linalg.solve(M, v)
-        return np.concatenate(([c0, c1, c2, c3], c4567))
+def _():
+    def _():
+        import numpy as np
 
-    def compute(
-        x_0, dx_0, y_0, dy_0, theta_0, dtheta_0, z_0, dz_0,
-        x_tf, dx_tf, y_tf, dy_tf, theta_tf, dtheta_tf, z_tf, dz_tf,
-        tf
-    ):
-    
-        hx0, hy0, dhx0, dhy0, d2hx0, d2hy0, d3hx0, d3hy0 = \
-            T(x_0, dx_0, y_0, dy_0, theta_0, dtheta_0, z_0, dz_0)
-   
-        hxt, hyt, dhxt, dhyt, d2hxt, d2hyt, d3hxt, d3hyt = \
-            T(x_tf, dx_tf, y_tf, dy_tf, theta_tf, dtheta_tf, z_tf, dz_tf)
-
-    
-        cx = hermite_coeffs(hx0, dhx0, d2hx0, d3hx0,
-                            hxt, dhxt, d2hxt, d3hxt, tf)
-        cy = hermite_coeffs(hy0, dhy0, d2hy0, d3hy0,
-                            hyt, dhyt, d2hyt, d3hyt, tf)
-
-    
-        dx_c  = np.array([i*cx[i]           for i in range(1,8)])
-        d2x_c = np.array([i*(i-1)*cx[i]     for i in range(2,8)])
-        d3x_c = np.array([i*(i-1)*(i-2)*cx[i] for i in range(3,8)])
-        dy_c  = np.array([i*cy[i]           for i in range(1,8)])
-        d2y_c = np.array([i*(i-1)*cy[i]     for i in range(2,8)])
-        d3y_c = np.array([i*(i-1)*(i-2)*cy[i] for i in range(3,8)])
-
-        def fun(t):
+        def hermite_coeffs(y0, y0p, y0pp, y0ppp, y1, y1p, y1pp, y1ppp, T):
+            c0 = y0
+            c1 = y0p
+            c2 = y0pp / 2
+            c3 = y0ppp / 6
         
-            tp  = np.array([t**i for i in range(8)])
-            t1  = np.array([t**i for i in range(7)])
-            t2  = np.array([t**i for i in range(6)])
-            t3  = np.array([t**i for i in range(5)])
-            hx   = cx   @ tp
-            hy   = cy   @ tp
-            dhx  = dx_c @ t1
-            dhy  = dy_c @ t1
-            d2hx = d2x_c@ t2
-            d2hy = d2y_c@ t2
-            d3hx = d3x_c@ t3
-            d3hy = d3y_c@ t3
+            M = np.zeros((4, 4))
+            v = np.zeros(4)
+        
+            for j, i in enumerate([4, 5, 6, 7]):
+                M[0, j] = T**i
+                M[1, j] = i * T**(i - 1)
+                M[2, j] = i * (i - 1) * T**(i - 2)
+                M[3, j] = i * (i - 1) * (i - 2) * T**(i - 3)
+        
+            v[0] = y1  - (c0 + c1*T + c2*T**2 + c3*T**3)
+            v[1] = y1p - (c1 + 2*c2*T + 3*c3*T**2)
+            v[2] = y1pp - (2*c2 + 6*c3*T)
+            v[3] = y1ppp - (6*c3)
+        
+            c4567 = np.linalg.solve(M, v)
+            return np.concatenate(([c0, c1, c2, c3], c4567))
 
-            x, dx, y, dy, theta, dtheta, z, dz = T_inv(
-                hx, hy, dhx, dhy, d2hx, d2hy, d3hx, d3hy
+        # Dummy T function: maps full state to flat outputs and derivatives (replace with your real one)
+        def T(x, dx, y, dy, theta, dtheta, z, dz):
+            hx = x - (1.0/3)*np.sin(theta)  # Using l=1 for simplicity
+            hy = y + (1.0/3)*np.cos(theta)
+            dhx = dx - (1.0/3)*np.cos(theta)*dtheta
+            dhy = dy - (1.0/3)*np.sin(theta)*dtheta
+            d2hx = 0.0  # Placeholder
+            d2hy = 0.0  # Placeholder
+            d3hx = 0.0  # Placeholder
+            d3hy = 0.0  # Placeholder
+            return hx, hy, dhx, dhy, d2hx, d2hy, d3hx, d3hy
+
+        # Dummy T_inv function: invert flat outputs to full state (replace with your real one)
+        def T_inv(hx, hy, dhx, dhy, d2hx, d2hy, d3hx, d3hy):
+            x = hx + (1.0/3)*np.sin(0)  # Assume theta=0 for dummy
+            y = hy - (1.0/3)*np.cos(0)
+            dx = dhx
+            dy = dhy
+            theta = 0.0
+            dtheta = 0.0
+            z = -9.81  # dummy gravity
+            dz = 0.0
+            return x, dx, y, dy, theta, dtheta, z, dz
+
+        def compute(
+            x_0, dx_0, y_0, dy_0, theta_0, dtheta_0, z_0, dz_0,
+            x_tf, dx_tf, y_tf, dy_tf, theta_tf, dtheta_tf, z_tf, dz_tf,
+            tf,
+            M=1.0,
+            g=9.81,
+            l=1.0
+        ):
+            hx0, hy0, dhx0, dhy0, d2hx0, d2hy0, d3hx0, d3hy0 = T(
+                x_0, dx_0, y_0, dy_0, theta_0, dtheta_0, z_0, dz_0
+            )
+            hxt, hyt, dhxt, dhyt, d2hxt, d2hyt, d3hxt, d3hyt = T(
+                x_tf, dx_tf, y_tf, dy_tf, theta_tf, dtheta_tf, z_tf, dz_tf
             )
 
-            fx  = M * d2hx
-            fy  = M * (d2hy + g)
-            f   = np.hypot(fx, fy)
-            phi = np.arctan2(fy, fx)
+            cx = hermite_coeffs(hx0, dhx0, d2hx0, d3hx0,
+                                hxt, dhxt, d2hxt, d3hxt, tf)
+            cy = hermite_coeffs(hy0, dhy0, d2hy0, d3hy0,
+                                hyt, dhyt, d2hyt, d3hyt, tf)
 
-            return np.array([x, dx, y, dy, theta, dtheta, z, dz, f, phi])
+            dx_c  = np.array([i*cx[i]           for i in range(1,8)])
+            d2x_c = np.array([i*(i-1)*cx[i]     for i in range(2,8)])
+            d3x_c = np.array([i*(i-1)*(i-2)*cx[i] for i in range(3,8)])
+            dy_c  = np.array([i*cy[i]           for i in range(1,8)])
+            d2y_c = np.array([i*(i-1)*cy[i]     for i in range(2,8)])
+            d3y_c = np.array([i*(i-1)*(i-2)*cy[i] for i in range(3,8)])
 
-        return fun
+            def fun(t):
+                tp  = np.array([t**i for i in range(8)])
+                t1  = np.array([t**i for i in range(7)])
+                t2  = np.array([t**i for i in range(6)])
+                t3  = np.array([t**i for i in range(5)])
+
+                hx   = cx   @ tp
+                hy   = cy   @ tp
+                dhx  = dx_c @ t1
+                dhy  = dy_c @ t1
+                d2hx = d2x_c @ t2
+                d2hy = d2y_c @ t2
+                d3hx = d3x_c @ t3
+                d3hy = d3y_c @ t3
+
+                x, dx, y, dy, theta, dtheta, z, dz = T_inv(
+                    hx, hy, dhx, dhy, d2hx, d2hy, d3hx, d3hy
+                )
+
+                fx = M * d2hx
+                fy = M * (d2hy + g)
+                f = np.hypot(fx, fy)
+                phi = np.arctan2(fy, fx)
+
+                return np.array([x, dx, y, dy, theta, dtheta, z, dz, f, phi])
+
+            return fun
+
+
+        # Test example
+        if __name__ == "__main__":
+            traj = compute(
+                0.5, 0.1, 0.2, 0.05,
+                np.pi/4, 0.2, 1.5, 0.3,
+                1.0, 0.0, 0.0, 0.0,
+                np.pi/3, 0.0, -1.0, 0.0,
+                2.0
+            )
+            print("State and input at t=0:")
+            print(traj(0))
+            print("State and input at t=2.0:")
+        return print(traj(2.0))
+
+
+    _()
     return
 
 
@@ -2444,6 +2491,11 @@ def _(mo):
     Make the graph of the relevant variables as a function of time, then make a video out of the same result. Comment and iterate if necessary!
     """
     )
+    return
+
+
+@app.cell
+def _():
     return
 
 

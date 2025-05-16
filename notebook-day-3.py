@@ -1848,9 +1848,9 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
-    ## Third and Fourth Derivatives (with corrected \(\ddot h\))
+    ## Third and Fourth Derivatives 
 
-    We start from the *corrected* second derivative
+    We start from the second derivative
 
     \(
     \ddot h =

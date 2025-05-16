@@ -1848,6 +1848,238 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
+    ## Third and Fourth Derivatives (with corrected \(\ddot h\))
+
+    We start from the *corrected* second derivative
+
+    \(
+    \ddot h =
+    \begin{pmatrix}
+    -\,\dfrac{z}{m}\,\sin\theta
+      \;-\;\dfrac{\ell}{3}\,\dfrac{v_2}{z}\,\cos\theta
+      \;-\;\tfrac{\ell}{3}\,\cos\theta\,\ddot\theta
+    \\[8pt]
+    \;\;\dfrac{z}{m}\,\cos\theta
+      \;-\;\dfrac{\ell}{3}\,\dfrac{v_2}{z}\,\sin\theta
+      \;-\;\tfrac{\ell}{3}\,\sin\theta\,\ddot\theta
+    \end{pmatrix}.
+    \)
+
+    Define the shorthands
+
+    \(
+    A = \frac{z}{m},\quad
+    \dot A = \frac{\dot z}{m},\quad
+    \ddot A = \frac{\ddot z}{m} = \frac{v_1}{m},
+    \)
+
+    \(
+    C = \frac{\ell}{3},\quad
+    B = C\,\frac{v_2}{z},\quad
+    \dot B = C\,\frac{z\,\dot v_2 - v_2\,\dot z}{z^2},\quad
+    \ddot B = C\!\Bigl(\frac{\ddot v_2}{z}
+    -2\,\frac{\dot v_2\,\dot z}{z^2}
+    -\frac{v_2\,\ddot z}{z^2}
+    +2\,\frac{v_2\,\dot z^2}{z^3}\Bigr).
+    \)
+
+    ---
+
+    ### 1. Third derivative
+
+    Differentiate each term of \(\ddot h\):
+
+    \(
+    h^{(3)} =
+    \frac{d}{dt}\,\ddot h
+    =
+    \begin{pmatrix}
+    -\,\dot A\,\sin\theta
+    -\,A\,\cos\theta\,\dot\theta
+    -\,\dot B\,\cos\theta
+    +\,B\,\sin\theta\,\dot\theta
+    +\,C\,\sin\theta\,\dot\theta\,\ddot\theta
+    -\,C\,\cos\theta\,\theta^{(3)}
+    \\[8pt]
+    \;\;\dot A\,\cos\theta
+    -\,A\,\sin\theta\,\dot\theta
+    -\,\dot B\,\sin\theta
+    -\,B\,\cos\theta\,\dot\theta
+    -\,C\,\cos\theta\,\dot\theta\,\ddot\theta
+    -\,C\,\sin\theta\,\theta^{(3)}
+    \end{pmatrix}.
+    \)
+
+    ---
+
+    ### 2. Fourth derivative
+
+    We now differentiate *term by term* in \(h^{(3)}\).  For the first component:
+
+    1. \(\frac{d}{dt}[-\dot A\,\sin\theta]
+       = -\,\ddot A\,\sin\theta
+         -\,\dot A\,\cos\theta\,\dot\theta.\)
+
+    2. \(\frac{d}{dt}[-A\,\cos\theta\,\dot\theta]
+       = -\,\dot A\,\cos\theta\,\dot\theta
+         +\,A\,\sin\theta\,\dot\theta^2
+         -\,A\,\cos\theta\,\ddot\theta.\)
+
+    3. \(\frac{d}{dt}[-\,\dot B\,\cos\theta]
+       = -\,\ddot B\,\cos\theta
+         +\,\dot B\,\sin\theta\,\dot\theta.\)
+
+    4. \(\frac{d}{dt}[\,B\,\sin\theta\,\dot\theta]
+       = \dot B\,\sin\theta\,\dot\theta
+         +\,B\,\cos\theta\,\dot\theta^2
+         +\,B\,\sin\theta\,\ddot\theta.\)
+
+    5. \(\frac{d}{dt}[\,C\,\sin\theta\,\dot\theta\,\ddot\theta]
+       = C\bigl(\cos\theta\,\dot\theta^2\,\ddot\theta
+               +\sin\theta\,\ddot\theta^2
+               +\sin\theta\,\dot\theta\,\theta^{(3)}\bigr).\)
+
+    6. \(\frac{d}{dt}[-\,C\,\cos\theta\,\theta^{(3)}]
+       = C\,\sin\theta\,\dot\theta\,\theta^{(3)}
+         -\,C\,\cos\theta\,\theta^{(4)}.\)
+
+    Summing these gives:
+
+    \(
+    \begin{aligned}
+    h^{(4)}_1 =\;&
+    -\,\ddot A\,\sin\theta
+    -2\,\dot A\,\cos\theta\,\dot\theta
+    +\;A\,\sin\theta\,\dot\theta^2
+    -\;A\,\cos\theta\,\ddot\theta\\
+    &-\,\ddot B\,\cos\theta
+    +2\,\dot B\,\sin\theta\,\dot\theta
+    +\;B\,\cos\theta\,\dot\theta^2
+    +\;B\,\sin\theta\,\ddot\theta\\
+    &+\;C\,\cos\theta\,\dot\theta^2\,\ddot\theta
+    +\;C\,\sin\theta\,\ddot\theta^2
+    +2\,C\,\sin\theta\,\dot\theta\,\theta^{(3)}
+    -\,C\,\cos\theta\,\theta^{(4)}.
+    \end{aligned}
+    \)
+
+    For the second component, term-by-term:
+
+    1. $\frac{d}{dt}[\dot A\,\cos\theta]
+       = \ddot A\,\cos\theta -\,\dot A\,\sin\theta\,\dot\theta.$
+
+    2. $\frac{d}{dt}[-A\,\sin\theta\,\dot\theta]
+       = -\,\dot A\,\sin\theta\,\dot\theta -\,A\,\cos\theta\,\dot\theta^2 -\,A\,\sin\theta\,\ddot\theta.$
+
+    3. $\frac{d}{dt}[-\dot B\,\sin\theta]
+       = -\,\ddot B\,\sin\theta -\,\dot B\,\cos\theta\,\dot\theta.$
+
+    4. $\frac{d}{dt}[-B\,\cos\theta\,\dot\theta]
+       = -\,\dot B\,\cos\theta\,\dot\theta +\,B\,\sin\theta\,\dot\theta^2 -\,B\,\cos\theta\,\ddot\theta.$
+
+    5. $\frac{d}{dt}[-\,C\,\cos\theta\,\dot\theta\,\ddot\theta]
+       = C\bigl(\sin\theta\,\dot\theta^2\,\ddot\theta -\cos\theta\,\ddot\theta^2 -\cos\theta\,\dot\theta\,\theta^{(3)}\bigr).$
+
+    6. $\frac{d}{dt}[-\,C\,\sin\theta\,\theta^{(3)}]
+       = -\,C\,\cos\theta\,\dot\theta\,\theta^{(3)} -\,C\,\sin\theta\,\theta^{(4)}.$
+
+    Summing yields:
+
+    \(
+    \begin{aligned}
+    h^{(4)}_2 =\;&
+    \ddot A\,\cos\theta
+    -2\,\dot A\,\sin\theta\,\dot\theta
+    -\;A\,\cos\theta\,\dot\theta^2
+    -\;A\,\sin\theta\,\ddot\theta\\
+    &-\,\ddot B\,\sin\theta
+    -2\,\dot B\,\cos\theta\,\dot\theta
+    +\;B\,\sin\theta\,\dot\theta^2
+    -\;B\,\cos\theta\,\ddot\theta\\
+    &+\;C\,\sin\theta\,\dot\theta^2\,\ddot\theta
+    -\;C\,\cos\theta\,\ddot\theta^2
+    -2\,C\,\cos\theta\,\dot\theta\,\theta^{(3)}
+    -\,C\,\sin\theta\,\theta^{(4)}.
+    \end{aligned}
+    \)
+
+    ---
+
+    ### 3. Replace \(A,B,C\) with original expressions
+
+    \(
+    A = \tfrac{z}{m},\quad
+    \dot A = \tfrac{\dot z}{m},\quad
+    \ddot A = \tfrac{v_1}{m},
+    \)
+
+    \(
+    C = \tfrac{\ell}{3},\quad
+    B = \tfrac{\ell}{3}\,\tfrac{v_2}{z},\quad
+    \dot B = \tfrac{\ell}{3}\,\tfrac{z\,\dot v_2 - v_2\,\dot z}{z^2},\quad
+    \ddot B = \tfrac{\ell}{3}\!\Bigl(\tfrac{\ddot v_2}{z}
+    -2\,\tfrac{\dot v_2\,\dot z}{z^2}
+    -\tfrac{v_2\,v_1}{z^2}
+    +2\,\tfrac{v_2\,\dot z^2}{z^3}\Bigr).
+    \)
+
+    Hence the *full* fourth derivative is
+
+    \(
+    \boxed{
+    h^{(4)} =
+    \begin{pmatrix}
+    -\,\tfrac{v_1}{m}\sin\theta
+    -2\,\tfrac{\dot z}{m}\cos\theta\,\dot\theta
+    +\tfrac{z}{m}\sin\theta\,\dot\theta^2
+    -\tfrac{z}{m}\cos\theta\,\ddot\theta
+    \\[4pt]
+    \quad
+    -\,\tfrac{\ell}{3}\Bigl(\tfrac{\ddot v_2}{z}
+    -2\,\tfrac{\dot v_2\,\dot z}{z^2}
+    -\tfrac{v_2\,v_1}{z^2}
+    +2\,\tfrac{v_2\,\dot z^2}{z^3}\Bigr)\cos\theta
+    +2\,\tfrac{\ell}{3}\tfrac{z\,\dot v_2 - v_2\,\dot z}{z^2}\sin\theta\,\dot\theta
+    +\tfrac{\ell}{3}\tfrac{v_2}{z}\cos\theta\,\dot\theta^2
+    +\tfrac{\ell}{3}\tfrac{v_2}{z}\sin\theta\,\ddot\theta
+    \\[6pt]
+    \quad
+    +\;\tfrac{\ell}{3}\bigl(\cos\theta\,\dot\theta^2\,\ddot\theta
+    +\sin\theta\,\ddot\theta^2
+    +2\,\sin\theta\,\dot\theta\,\theta^{(3)}\bigr)
+    -\,\tfrac{\ell}{3}\cos\theta\,\theta^{(4)}
+    \\[10pt]
+    \;\;\tfrac{v_1}{m}\cos\theta
+    -2\,\tfrac{\dot z}{m}\sin\theta\,\dot\theta
+    -\tfrac{z}{m}\cos\theta\,\dot\theta^2
+    -\tfrac{z}{m}\sin\theta\,\ddot\theta
+    \\[4pt]
+    \quad
+    -\,\tfrac{\ell}{3}\Bigl(\tfrac{\ddot v_2}{z}
+    -2\,\tfrac{\dot v_2\,\dot z}{z^2}
+    -\tfrac{v_2\,v_1}{z^2}
+    +2\,\tfrac{v_2\,\dot z^2}{z^3}\Bigr)\sin\theta
+    -2\,\tfrac{\ell}{3}\tfrac{z\,\dot v_2 - v_2\,\dot z}{z^2}\cos\theta\,\dot\theta
+    +\tfrac{\ell}{3}\tfrac{v_2}{z}\sin\theta\,\dot\theta^2
+    -\tfrac{\ell}{3}\tfrac{v_2}{z}\cos\theta\,\ddot\theta
+    \\[6pt]
+    \quad
+    +\;\tfrac{\ell}{3}\bigl(\sin\theta\,\dot\theta^2\,\ddot\theta
+    -\cos\theta\,\ddot\theta^2
+    -2\,\cos\theta\,\dot\theta\,\theta^{(3)}\bigr)
+    -\,\tfrac{\ell}{3}\sin\theta\,\theta^{(4)}
+    \end{pmatrix}
+    }
+    \)
+    """
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
     ## 🧩 Exact Linearization
 
     Show that with yet another auxiliary system with input $u=(u_1, u_2)$ and output $v$ fed into the previous one, we can achieve the dynamics

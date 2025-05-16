@@ -2271,7 +2271,7 @@ def _(M, T, g, l, np, values):
     recovered = T_inv(*values)
     print("x, dx, y, dy, theta, dtheta, z, dz =")
     print(recovered)
-    return
+    return (T_inv,)
 
 
 @app.cell(hide_code=True)
@@ -2312,87 +2312,120 @@ def _(mo):
     return
 
 
-@app.function
-def compute(
-    x_0, dx_0, y_0, dy_0, theta_0, dtheta_0, z_0, dz_0,
-    x_tf, dx_tf, y_tf, dy_tf, theta_tf, dtheta_tf, z_tf, dz_tf,
-    tf
-):
-    import numpy as np
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+    *Choose flat outputs*  
+       We use
+       \(
+         h_x = x - \tfrac{\ell}{3}\sin\theta,\quad
+         h_y = y + \tfrac{\ell}{3}\cos\theta
+       \)
+       as our “flat outputs.”
 
-    def cubic(a0, a1, a2, a3, t):
-        return a0 * t**3 + a1 * t**2 + a2 * t + a3
+    *Extract boundary data*  
+       At \(t=0\) and \(t=t_f\), compute  
+       \(
+         (h_x,h_y),\;(\dot h_x,\dot h_y),\;(\ddot h_x,\ddot h_y),\;(h^{(3)}_x,h^{(3)}_y)
+       \)
+   
+       by calling your function T(...) on the known initial and final states.
 
-    def cubic_coeffs(p0, v0, pf, vf, tf):
-        T = tf
-        A = np.array([
-            [T**3, T**2, T, 1],
-            [3*T**2, 2*T, 1, 0],
-            [0, 0, 0, 1],
-            [0, 0, 1, 0]
-        ])
-        b = np.array([pf, vf, p0, v0])
-        return np.linalg.solve(A, b)
+    *Hermite interpolation*  
+       Build two 7th-degree polynomials \(h_x(t)\) and \(h_y(t)\) that match those eight boundary values (value, 1st, 2nd, 3rd derivatives at both ends).  This ensures continuity of position, velocity, acceleration and jerk.
 
-    ax = cubic_coeffs(x_0, dx_0, x_tf, dx_tf, tf)
-    ay = cubic_coeffs(y_0, dy_0, y_tf, dy_tf, tf)
-    atheta = cubic_coeffs(theta_0, dtheta_0, theta_tf, dtheta_tf, tf)
-    az = cubic_coeffs(z_0, dz_0, z_tf, dz_tf, tf)
+    *Invert back to state*  
+       At any \(t\), evaluate \(h(h_x,h_y)\) and its first three derivatives, then recover  
+       \((x,\dot x,y,\dot y,\theta,\dot\theta,z,\dot z)\)  
+       by calling your inversion T_inv(...).
 
-    M = 1.0
-    l = 1.0
-
-    def fun(t):
-        x = cubic(*ax, t)
-        dx = 3*ax[0]*t**2 + 2*ax[1]*t + ax[2]
-        ddx = 6*ax[0]*t + 2*ax[1]
-
-        y = cubic(*ay, t)
-        dy = 3*ay[0]*t**2 + 2*ay[1]*t + ay[2]
-        ddy = 6*ay[0]*t + 2*ay[1]
-
-        theta = cubic(*atheta, t)
-        dtheta = 3*atheta[0]*t**2 + 2*atheta[1]*t + atheta[2]
-        ddtheta = 6*atheta[0]*t + 2*atheta[1]
-
-        z = cubic(*az, t)
-        dz = 3*az[0]*t**2 + 2*az[1]*t + az[2]
-        ddz = 6*az[0]*t + 2*az[1]
-
-        if z == 0:
-            raise ValueError("z = 0 -> division by zero in control computation")
-
-        # Compute f_x and f_y from inverse transformation
-        inner = np.array([
-            z - M*l/3 * dtheta**2,
-            M*l * ddz / (3*z)
-        ])
-        R = np.array([
-            [np.cos(theta - np.pi/2), -np.sin(theta - np.pi/2)],
-            [np.sin(theta - np.pi/2),  np.cos(theta - np.pi/2)]
-        ])
-        f_vec = R @ inner
-        fx, fy = f_vec
-
-        f = np.sqrt(fx**2 + fy**2)
-        phi = np.arctan2(-fx, fy) - theta
-
-        return np.array([x, dx, y, dy, theta, dtheta, z, dz, f, phi])
-
-    return fun
+    *Compute inputs*  
+       Finally, reconstruct the thrust magnitude and direction via  
+       \(\;f_x = m\,\ddot x,\;f_y = m(\ddot y+g)\;\rightarrow\;f=\sqrt{f_x^2+f_y^2},\;\phi=\arctan(f_y,f_x).\)
+    """
+    )
+    return
 
 
 @app.cell
-def _():
-    traj = compute(
-        x_0=0, dx_0=0, y_0=10, dy_0=0, theta_0=0, dtheta_0=0,
-        z_0=1, dz_0=0, x_tf=0, dx_tf=0, y_tf=1, dy_tf=0,
-        theta_tf=0, dtheta_tf=0, z_tf=1, dz_tf=0, tf=5
-    )
+def _(M, T, T_inv, g, np):
+    def hermite_coeffs(y0, y0p, y0pp, y0ppp, y1, y1p, y1pp, y1ppp, T):
+        c0 = y0
+        c1 = y0p
+        c2 = y0pp / 2
+        c3 = y0ppp / 6
+    
+        M = np.zeros((4, 4))
+        v = np.zeros(4)
+    
+        for j, i in enumerate([4, 5, 6, 7]):
+            M[0, j] = T**i
+            M[1, j] = i * T**(i-1)
+            M[2, j] = i*(i-1) * T**(i-2)
+            M[3, j] = i*(i-1)(i-2) * T*(i-3)
+    
+        v[0] = y1  - (c0 + c1*T + c2*T*2 + c3*T*3)
+        v[1] = y1p - (c1 + 2*c2*T + 3*c3*T**2)
+        v[2] = y1pp - (2*c2 + 6*c3*T)
+        v[3] = y1ppp - (6*c3)
+    
+        c4567 = np.linalg.solve(M, v)
+        return np.concatenate(([c0, c1, c2, c3], c4567))
 
-    # Evaluate state and input at time t = 2.5
-    print(traj(2.5))
+    def compute(
+        x_0, dx_0, y_0, dy_0, theta_0, dtheta_0, z_0, dz_0,
+        x_tf, dx_tf, y_tf, dy_tf, theta_tf, dtheta_tf, z_tf, dz_tf,
+        tf
+    ):
+    
+        hx0, hy0, dhx0, dhy0, d2hx0, d2hy0, d3hx0, d3hy0 = \
+            T(x_0, dx_0, y_0, dy_0, theta_0, dtheta_0, z_0, dz_0)
+   
+        hxt, hyt, dhxt, dhyt, d2hxt, d2hyt, d3hxt, d3hyt = \
+            T(x_tf, dx_tf, y_tf, dy_tf, theta_tf, dtheta_tf, z_tf, dz_tf)
 
+    
+        cx = hermite_coeffs(hx0, dhx0, d2hx0, d3hx0,
+                            hxt, dhxt, d2hxt, d3hxt, tf)
+        cy = hermite_coeffs(hy0, dhy0, d2hy0, d3hy0,
+                            hyt, dhyt, d2hyt, d3hyt, tf)
+
+    
+        dx_c  = np.array([i*cx[i]           for i in range(1,8)])
+        d2x_c = np.array([i*(i-1)*cx[i]     for i in range(2,8)])
+        d3x_c = np.array([i*(i-1)*(i-2)*cx[i] for i in range(3,8)])
+        dy_c  = np.array([i*cy[i]           for i in range(1,8)])
+        d2y_c = np.array([i*(i-1)*cy[i]     for i in range(2,8)])
+        d3y_c = np.array([i*(i-1)*(i-2)*cy[i] for i in range(3,8)])
+
+        def fun(t):
+        
+            tp  = np.array([t**i for i in range(8)])
+            t1  = np.array([t**i for i in range(7)])
+            t2  = np.array([t**i for i in range(6)])
+            t3  = np.array([t**i for i in range(5)])
+            hx   = cx   @ tp
+            hy   = cy   @ tp
+            dhx  = dx_c @ t1
+            dhy  = dy_c @ t1
+            d2hx = d2x_c@ t2
+            d2hy = d2y_c@ t2
+            d3hx = d3x_c@ t3
+            d3hy = d3y_c@ t3
+
+            x, dx, y, dy, theta, dtheta, z, dz = T_inv(
+                hx, hy, dhx, dhy, d2hx, d2hy, d3hx, d3hy
+            )
+
+            fx  = M * d2hx
+            fy  = M * (d2hy + g)
+            f   = np.hypot(fx, fy)
+            phi = np.arctan2(fy, fx)
+
+            return np.array([x, dx, y, dy, theta, dtheta, z, dz, f, phi])
+
+        return fun
     return
 
 

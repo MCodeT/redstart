@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.13.6"
+__generated_with = "0.13.8"
 app = marimo.App()
 
 
@@ -1690,6 +1690,80 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
+    The point \( h \in \mathbb{R}^2 \) is defined as:
+
+    \[
+    h = \begin{bmatrix}
+    x - \frac{\ell}{3} \sin \theta \\
+    y - \frac{\ell}{3} \cos \theta
+    \end{bmatrix}
+    \]
+
+    This point represents a **location on the booster that lies one-third of the distance from the center of mass to the up**, measured **along the booster’s axis**.
+    """
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    def _():
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        # Booster endpoints: base and top
+        x1, y1 = 2, 1   # base of the booster
+        x2, y2 = 0, 3   # top of the booster
+
+        # Center of mass
+        center_x = (x1 + x2) / 2
+        center_y = (y1 + y2) / 2
+
+        # Compute vector from CM to top (not base)
+        target_x = center_x + (1/3) * (x2 - center_x)
+        target_y = center_y + (1/3) * (y2 - center_y)
+
+        # Booster orientation
+        booster_angle = np.arctan2(y2 - y1, x2 - x1)
+
+        # Flame: tilt and direction
+        flame_length = 0.5
+        flame_tilt = np.pi / 12  # slight tilt
+        flame_angle = booster_angle + np.pi + flame_tilt  # opposite booster direction
+
+        flame_x = x1 + flame_length * np.cos(flame_angle)
+        flame_y = y1 + flame_length * np.sin(flame_angle)
+
+        # Plotting
+        plt.figure(figsize=(6, 6))
+        plt.plot([x1, x2], [y1, y2], 'k-', linewidth=3, label='Booster')
+        plt.plot(center_x, center_y, 'bo', label='Center of Mass')
+        plt.plot(target_x, target_y, 'o', color='#FFFF00', markersize=8, label='Point h (1/3 toward tip)')
+        plt.plot([x1, flame_x], [y1, flame_y], '-', color='orange', linewidth=2, label='Thrust Direction (Flame)')
+
+        # Annotations
+        plt.text(center_x + 0.1, center_y, 'CM', fontsize=9)
+        plt.text(target_x + 0.1, target_y, 'h', fontsize=9, color='darkorange')
+
+        # Styling
+        plt.xlabel('X-axis')
+        plt.ylabel('Y-axis')
+        plt.title('Geometrical Interpretation of $h$ (above CM)')
+        plt.axis('equal')
+        plt.legend(loc='upper right')
+        plt.grid(True)
+
+        return plt.show()
+
+    _()
+
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
     ## 🧩 First and Second-Order Derivatives
 
     Compute $\dot{h}$ as a function of $\dot{x}$, $\dot{y}$, $\theta$ and $\dot{\theta}$ (and constants) and then $\ddot{h}$ as a function of $\theta$ and $z$ (and constants) when the auxiliary system is plugged in the booster.
@@ -1991,6 +2065,37 @@ def _(mo):
     Implement a function `T` of `x, dx, y, dy, theta, dtheta, z, dz` that returns `h_x, h_y, dh_x, dh_y, d2h_x, d2h_y, d3h_x, d3h_y`.
     """
     )
+    return
+
+
+@app.cell
+def _(M, g, l, np):
+    def T(x, dx, y, dy, theta, dtheta, z, dz):
+ 
+        # h
+        hx = x - (l/3)*np.sin(theta)
+        hy = y + (l/3)*np.cos(theta)
+    
+        # first derivative
+        dhx = dx - (l/3)*np.cos(theta)*dtheta
+        dhy = dy - (l/3)*np.sin(theta)*dtheta
+    
+        # second derivative
+        # ddot h = (1/M) * [sinθ; -cosθ] * z - [0; g]
+        d2hx = (z/M) * np.sin(theta)
+        d2hy = (z/M) * -np.cos(theta) - g
+    
+        # third derivative
+        # h''' = (1/M)[ cosθ*dtheta*z + sinθ*dz; sinθ*dtheta*z - cosθ*dz ]
+        d3hx = (1/M) * (np.cos(theta)*dtheta*z + np.sin(theta)*dz)
+        d3hy = (1/M) * (np.sin(theta)*dtheta*z - np.cos(theta)*dz)
+    
+        return hx, hy, dhx, dhy, d2hx, d2hy, d3hx, d3hy
+
+
+    values = T(x=0.5, dx=0.1, y=0.2, dy=0.05, theta=np.pi/4, dtheta=0.2, z=1.5, dz=0.3)
+    print("hx, hy, dhx, dhy, d2hx, d2hy, d3hx, d3hy =")
+    print(values)
     return
 
 

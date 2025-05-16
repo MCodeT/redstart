@@ -2377,9 +2377,8 @@ def _():
             c4567 = np.linalg.solve(M, v)
             return np.concatenate(([c0, c1, c2, c3], c4567))
 
-        # Dummy T function: maps full state to flat outputs and derivatives (replace with your real one)
         def T(x, dx, y, dy, theta, dtheta, z, dz):
-            hx = x - (1.0/3)*np.sin(theta)  # Using l=1 for simplicity
+            hx = x - (1.0/3)*np.sin(theta)  
             hy = y + (1.0/3)*np.cos(theta)
             dhx = dx - (1.0/3)*np.cos(theta)*dtheta
             dhy = dy - (1.0/3)*np.sin(theta)*dtheta
@@ -2389,7 +2388,6 @@ def _():
             d3hy = 0.0  # Placeholder
             return hx, hy, dhx, dhy, d2hx, d2hy, d3hx, d3hy
 
-        # Dummy T_inv function: invert flat outputs to full state (replace with your real one)
         def T_inv(hx, hy, dhx, dhy, d2hx, d2hy, d3hx, d3hy):
             x = hx + (1.0/3)*np.sin(0)  # Assume theta=0 for dummy
             y = hy - (1.0/3)*np.cos(0)
@@ -2397,7 +2395,7 @@ def _():
             dy = dhy
             theta = 0.0
             dtheta = 0.0
-            z = -9.81  # dummy gravity
+            z = -1  # dummy gravity
             dz = 0.0
             return x, dx, y, dy, theta, dtheta, z, dz
 
@@ -2406,7 +2404,7 @@ def _():
             x_tf, dx_tf, y_tf, dy_tf, theta_tf, dtheta_tf, z_tf, dz_tf,
             tf,
             M=1.0,
-            g=9.81,
+            g=1,
             l=1.0
         ):
             hx0, hy0, dhx0, dhy0, d2hx0, d2hy0, d3hx0, d3hy0 = T(
@@ -2457,7 +2455,7 @@ def _():
             return fun
 
 
-        # Test example
+
         if __name__ == "__main__":
             traj = compute(
                 0.5, 0.1, 0.2, 0.05,
